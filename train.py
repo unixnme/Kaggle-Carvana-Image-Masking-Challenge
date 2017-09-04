@@ -1,15 +1,24 @@
 import cv2
+import keras
 import numpy as np
 import pandas as pd
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, TensorBoard
+from keras.optimizers import SGD, RMSprop
 from sklearn.model_selection import train_test_split
+import os
 
 import params
 
-input_size = params.input_size
+filepath= 'weights/best_weights.hdf5'
+rows = params.rows
+cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-model = params.model_factory()
+model = params.model_factory(input_shape=(rows,cols,3),
+        optimizer=
+        #SGD(lr=1e-3, momentum=0.9, nesterov=True),
+        RMSprop(lr=1e-4),
+        regularizer=keras.regularizers.l2(1e-3))
 
 df_train = pd.read_csv('input/train_masks.csv')
 ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -86,17 +95,19 @@ def randomHorizontalFlip(image, mask, u=0.5):
 
 
 def train_generator():
+    indices = np.array(ids_train_split.index)
     while True:
+        np.random.shuffle(indices)
         for start in range(0, len(ids_train_split), batch_size):
             x_batch = []
             y_batch = []
             end = min(start + batch_size, len(ids_train_split))
-            ids_train_batch = ids_train_split[start:end]
+            ids_train_batch = ids_train_split[indices[start:end]]
             for id in ids_train_batch.values:
-                img = cv2.imread('input/train/{}.jpg'.format(id))
-                img = cv2.resize(img, (input_size, input_size))
+                img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+                img = cv2.resize(img, (cols, rows))
                 mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                mask = cv2.resize(mask, (input_size, input_size))
+                mask = cv2.resize(mask, (cols, rows))
                 img = randomHueSaturationValue(img,
                                                hue_shift_limit=(-50, 50),
                                                sat_shift_limit=(-5, 5),
@@ -122,10 +133,10 @@ def valid_generator():
             end = min(start + batch_size, len(ids_valid_split))
             ids_valid_batch = ids_valid_split[start:end]
             for id in ids_valid_batch.values:
-                img = cv2.imread('input/train/{}.jpg'.format(id))
-                img = cv2.resize(img, (input_size, input_size))
+                img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+                img = cv2.resize(img, (cols, rows))
                 mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                mask = cv2.resize(mask, (input_size, input_size))
+                mask = cv2.resize(mask, (cols, rows))
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
@@ -134,25 +145,29 @@ def valid_generator():
             yield x_batch, y_batch
 
 
-callbacks = [EarlyStopping(monitor='val_loss',
-                           patience=8,
-                           verbose=1,
-                           min_delta=1e-4),
-             ReduceLROnPlateau(monitor='val_loss',
-                               factor=0.1,
-                               patience=4,
+if __name__ == '__main__':
+    callbacks = [EarlyStopping(monitor='val_loss',
+                               patience=8,
                                verbose=1,
-                               epsilon=1e-4),
-             ModelCheckpoint(monitor='val_loss',
-                             filepath='weights/best_weights.hdf5',
-                             save_best_only=True,
-                             save_weights_only=True),
-             TensorBoard(log_dir='logs')]
+                               min_delta=1e-4),
+                 ReduceLROnPlateau(monitor='val_loss',
+                                   factor=0.1,
+                                   patience=4,
+                                   verbose=1,
+                                   epsilon=1e-4),
+                 ModelCheckpoint(monitor='val_loss',
+                                 filepath=filepath,
+                                 save_best_only=True,
+                                 save_weights_only=True),
+                 TensorBoard(log_dir='logs')]
 
-model.fit_generator(generator=train_generator(),
-                    steps_per_epoch=np.ceil(float(len(ids_train_split)) / float(batch_size)),
-                    epochs=epochs,
-                    verbose=2,
-                    callbacks=callbacks,
-                    validation_data=valid_generator(),
-                    validation_steps=np.ceil(float(len(ids_valid_split)) / float(batch_size)))
+    if os.path.isfile(filepath):
+        model.load_weights(filepath, by_name=True)
+
+    model.fit_generator(generator=train_generator(),
+                        steps_per_epoch=np.ceil(float(len(ids_train_split)) / float(batch_size)),
+                        epochs=epochs,
+                        verbose=1,
+                        callbacks=callbacks,
+                        validation_data=valid_generator(),
+                        validation_steps=np.ceil(float(len(ids_valid_split)) / float(batch_size)))
