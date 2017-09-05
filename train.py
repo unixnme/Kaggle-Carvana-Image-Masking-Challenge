@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, TensorBoard
 from keras.optimizers import SGD, RMSprop
+from model import optimizers
 from sklearn.model_selection import train_test_split
 import os
 
@@ -16,8 +17,8 @@ epochs = params.max_epochs
 batch_size = params.batch_size
 model = params.model_factory(input_shape=(rows,cols,3),
         optimizer=
-        #SGD(lr=1e-3, momentum=0.9, nesterov=True),
-        RMSprop(lr=1e-4),
+        optimizers.SGD(lr=1e-4, momentum=0.9, accum_iters=10),
+        #RMSprop(lr=1e-4),
         regularizer=keras.regularizers.l2(1e-3))
 
 df_train = pd.read_csv('input/train_masks.csv')

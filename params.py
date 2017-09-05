@@ -1,10 +1,10 @@
 from model.u_net import get_unet_128, get_unet_256, get_unet_512, get_unet_1024
 
-rows = 160
-cols = 240
+rows = 320
+cols = 480
 
 max_epochs = 100
-batch_size = 12
+batch_size = 3
 
 orig_width = 1918
 orig_height = 1280
