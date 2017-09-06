@@ -1,16 +1,23 @@
 import cv2
+import keras
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from model import optimizers
 
 import params
 
-input_size = params.input_size
+rows = params.rows
+cols = params.cols
 batch_size = params.batch_size
 orig_width = params.orig_width
 orig_height = params.orig_height
 threshold = params.threshold
-model = params.model_factory()
+model = params.model_factory(input_shape=(rows,cols,3),
+        optimizer=
+        optimizers.SGD(lr=1e-4, momentum=0.9, accum_iters=10),
+        #RMSprop(lr=1e-4),
+        regularizer=keras.regularizers.l2(1e-3))
 
 df_test = pd.read_csv('input/sample_submission.csv')
 ids_test = df_test['img'].map(lambda s: s.split('.')[0])
@@ -43,8 +50,8 @@ for start in tqdm(range(0, len(ids_test), batch_size)):
     end = min(start + batch_size, len(ids_test))
     ids_test_batch = ids_test[start:end]
     for id in ids_test_batch.values:
-        img = cv2.imread('input/test/{}.jpg'.format(id))
-        img = cv2.resize(img, (input_size, input_size))
+        img = cv2.imread('input/test_hq/{}.jpg'.format(id))
+        img = cv2.resize(img, (cols, rows))
         x_batch.append(img)
     x_batch = np.array(x_batch, np.float32) / 255
     preds = model.predict_on_batch(x_batch)

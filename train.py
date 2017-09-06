@@ -10,16 +10,18 @@ import os
 
 import params
 
-filepath= 'weights/best_weights.hdf5'
+filepath= 'weights/best_weights_vgg16.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-model = params.model_factory(input_shape=(rows,cols,3),
+model = params.model_factory((rows,cols,3),
         optimizer=
-        optimizers.SGD(lr=1e-4, momentum=0.9, accum_iters=10),
-        #RMSprop(lr=1e-4),
+        #optimizers.SGD(lr=1e-4, momentum=0.9, accum_iters=10),
+        RMSprop(lr=1e-4),
         regularizer=keras.regularizers.l2(1e-3))
+model.load_weights('/home/linuxnme/.keras/models/vgg16_weights_tf_dim_ordering_tf_kernels.h5', by_name=True)
+model.summary()
 
 df_train = pd.read_csv('input/train_masks.csv')
 ids_train = df_train['img'].map(lambda s: s.split('.')[0])
