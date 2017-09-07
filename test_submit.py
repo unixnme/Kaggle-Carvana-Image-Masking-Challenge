@@ -13,11 +13,11 @@ batch_size = params.batch_size
 orig_width = params.orig_width
 orig_height = params.orig_height
 threshold = params.threshold
-model = params.model_factory(input_shape=(rows,cols,3),
+model = params.model_factory((rows,cols,3),
         optimizer=
-        optimizers.SGD(lr=1e-4, momentum=0.9, accum_iters=10),
+        optimizers.SGD(lr=1e-3, momentum=0.9, accum_iters=5),
         #RMSprop(lr=1e-4),
-        regularizer=keras.regularizers.l2(1e-3))
+        regularizer=keras.regularizers.l2(1e-4))
 
 df_test = pd.read_csv('input/sample_submission.csv')
 ids_test = df_test['img'].map(lambda s: s.split('.')[0])
@@ -42,10 +42,11 @@ def run_length_encode(mask):
 
 rles = []
 
-model.load_weights(filepath='weights/best_weights.hdf5')
+model.load_weights(filepath='weights/best_weights_vgg16.hdf5')
 
 print('Predicting on {} samples with batch_size = {}...'.format(len(ids_test), batch_size))
-for start in tqdm(range(0, len(ids_test), batch_size)):
+#for start in tqdm(range(0, len(ids_test), batch_size)):
+for start in tqdm(range(0, 10, batch_size)):
     x_batch = []
     end = min(start + batch_size, len(ids_test))
     ids_test_batch = ids_test[start:end]
