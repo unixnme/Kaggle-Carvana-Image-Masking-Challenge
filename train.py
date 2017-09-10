@@ -5,12 +5,13 @@ import pandas as pd
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, TensorBoard
 from keras.optimizers import SGD, RMSprop
 from model import optimizers
+from model.u_net import relu, leaky
 from sklearn.model_selection import train_test_split
 import os
 
 import params
 
-filepath= 'weights/best_weights_unet2048.hdf5'
+filepath= 'weights/best_weights_unet1024.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
@@ -19,7 +20,8 @@ model = params.model_factory(input_shape=(rows,cols,3),
         optimizer=
         optimizers.SGD(lr=1e-3, momentum=0.9, accum_iters=5),
         #RMSprop(lr=1e-4),
-        regularizer=keras.regularizers.l2(1e-4))
+        regularizer=keras.regularizers.l2(1e-3),
+        activation=relu)
 model.summary()
 
 df_train = pd.read_csv('input/train_masks.csv')
@@ -115,6 +117,9 @@ def train_generator():
                 mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
                 img, mask = randomHorizontalFlip(img, mask)
 
+                img = cv2.resize(img, (640, 960))
+                mask = cv2.resize(mask, (640, 960))
+
                 # choose random start location
                 x0 = np.random.randint(0, cols-img.shape[1])
                 y0 = np.random.randint(0, rows-img.shape[0])
@@ -141,6 +146,9 @@ def valid_generator():
             for id in ids_valid_batch.values:
                 img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                 mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
+
+                img = cv2.resize(img, (640, 960))
+                mask = cv2.resize(mask, (640, 960))
 
                 # choose random start location
                 x0 = np.random.randint(0, cols-img.shape[1])
