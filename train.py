@@ -10,17 +10,16 @@ import os
 
 import params
 
-filepath= 'weights/best_weights_vgg16.hdf5'
+filepath= 'weights/best_weights_unet2048.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-model = params.model_factory((rows,cols,3),
+model = params.model_factory(input_shape=(rows,cols,3),
         optimizer=
         optimizers.SGD(lr=1e-3, momentum=0.9, accum_iters=5),
         #RMSprop(lr=1e-4),
         regularizer=keras.regularizers.l2(1e-4))
-model.load_weights('/home/linuxnme/.keras/models/vgg16_weights_tf_dim_ordering_tf_kernels.h5', by_name=True)
 model.summary()
 
 df_train = pd.read_csv('input/train_masks.csv')
@@ -102,49 +101,59 @@ def train_generator():
     while True:
         np.random.shuffle(indices)
         for start in range(0, len(ids_train_split), batch_size):
-            x_batch = []
-            y_batch = []
             end = min(start + batch_size, len(ids_train_split))
+            x_batch = np.zeros(shape=(end-start, rows, cols, 3))
+            y_batch = np.zeros(shape=(end-start, rows, cols))
             ids_train_batch = ids_train_split[indices[start:end]]
+            idx = 0
             for id in ids_train_batch.values:
                 img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                img = cv2.resize(img, (cols, rows))
-                mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                mask = cv2.resize(mask, (cols, rows))
                 img = randomHueSaturationValue(img,
                                                hue_shift_limit=(-50, 50),
                                                sat_shift_limit=(-5, 5),
                                                val_shift_limit=(-15, 15))
-                img, mask = randomShiftScaleRotate(img, mask,
-                                                   shift_limit=(-0.0625, 0.0625),
-                                                   scale_limit=(-0.1, 0.1),
-                                                   rotate_limit=(-0, 0))
+                mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
                 img, mask = randomHorizontalFlip(img, mask)
-                mask = np.expand_dims(mask, axis=2)
-                x_batch.append(img)
-                y_batch.append(mask)
+
+                # choose random start location
+                x0 = np.random.randint(0, cols-img.shape[1])
+                y0 = np.random.randint(0, rows-img.shape[0])
+                # copy
+                x_batch[idx, y0:y0+img.shape[0], x0:x0+img.shape[1], :] = img
+                y_batch[idx, y0:y0+img.shape[0], x0:x0+img.shape[1]] = mask
+
+                idx += 1
+
             x_batch = np.array(x_batch, np.float32) / 255
             y_batch = np.array(y_batch, np.float32) / 255
+            y_batch = np.expand_dims(y_batch, axis=-1)
             yield x_batch, y_batch
 
 
 def valid_generator():
     while True:
         for start in range(0, len(ids_valid_split), batch_size):
-            x_batch = []
-            y_batch = []
             end = min(start + batch_size, len(ids_valid_split))
+            x_batch = np.zeros(shape=(end-start, rows, cols, 3))
+            y_batch = np.zeros(shape=(end-start, rows, cols))
             ids_valid_batch = ids_valid_split[start:end]
+            idx = 0
             for id in ids_valid_batch.values:
                 img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                img = cv2.resize(img, (cols, rows))
                 mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                mask = cv2.resize(mask, (cols, rows))
-                mask = np.expand_dims(mask, axis=2)
-                x_batch.append(img)
-                y_batch.append(mask)
+
+                # choose random start location
+                x0 = np.random.randint(0, cols-img.shape[1])
+                y0 = np.random.randint(0, rows-img.shape[0])
+                # copy
+                x_batch[idx, y0:y0+img.shape[0], x0:x0+img.shape[1], :] = img
+                y_batch[idx, y0:y0+img.shape[0], x0:x0+img.shape[1]] = mask
+
+                idx += 1
+
             x_batch = np.array(x_batch, np.float32) / 255
             y_batch = np.array(y_batch, np.float32) / 255
+            y_batch = np.expand_dims(y_batch, axis=-1)
             yield x_batch, y_batch
 
 
