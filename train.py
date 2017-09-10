@@ -2,7 +2,7 @@ import cv2
 import keras
 import numpy as np
 import pandas as pd
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, TensorBoard
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, TensorBoard, LearningRateScheduler
 from keras.optimizers import SGD, RMSprop
 from model import optimizers
 from model.u_net import relu, leaky
@@ -16,10 +16,12 @@ rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
+learning_rate = params.learning_rate
+half_life = params.half_life
 model = params.model_factory(input_shape=(rows,cols,3),
         optimizer=
-        optimizers.SGD(lr=1e-3, momentum=0.9, accum_iters=5),
-        #RMSprop(lr=1e-4),
+        #optimizers.SGD(lr=1e-3, momentum=0.9, accum_iters=5),
+        RMSprop(lr=1e-4),
         regularizer=keras.regularizers.l2(1e-3),
         activation=relu)
 model.summary()
@@ -164,17 +166,14 @@ def valid_generator():
             y_batch = np.expand_dims(y_batch, axis=-1)
             yield x_batch, y_batch
 
+def step_decay(epoch):
+    lr = learning_rate * np.power(0.5, epoch/half_life)
+    print 'learning rate =', lr
+    return lr
+
 
 if __name__ == '__main__':
-    callbacks = [EarlyStopping(monitor='val_loss',
-                               patience=8,
-                               verbose=1,
-                               min_delta=1e-4),
-                 ReduceLROnPlateau(monitor='val_loss',
-                                   factor=0.1,
-                                   patience=4,
-                                   verbose=1,
-                                   epsilon=1e-4),
+    callbacks = [LearningRateScheduler(step_decay),
                  ModelCheckpoint(monitor='val_loss',
                                  filepath=filepath,
                                  save_best_only=True,

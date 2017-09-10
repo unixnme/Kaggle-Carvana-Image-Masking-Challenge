@@ -12,4 +12,7 @@ orig_height = 1280
 
 threshold = 0.5
 
+learning_rate = 1e-2
+half_life = 16.
+
 model_factory = get_unet_1024
