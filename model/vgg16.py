@@ -76,11 +76,11 @@ def vgg16(input_shape=(128, 128, 3), regularizer=None, optimizer=SGD, activation
     x9 = Conv2D(64, (3, 3), padding='same', kernel_regularizer=regularizer, name='s')(x9)
     x9 = BatchNormalization()(x9)
     x9 = activation()(x9)
-    x9 = Conv2D(64, (3, 3), padding='same', kernel_regularizer=regularizer, name='ss')(x9)
+    x9 = Conv2D(64, (3, 3), padding='same', kernel_regularizer=regularizer, name='conv2d_8')(x9)
     x9 = BatchNormalization()(x9)
     x9 = activation()(x9)
 
-    classify = Conv2D(num_classes, (1, 1), activation='sigmoid', name='sss')(x9)
+    classify = Conv2D(num_classes, (1, 1), activation='sigmoid', name='conv2d_9')(x9)
 
     model = Model(img_input, classify, name='vgg16')
     model.compile(optimizer=optimizer, loss=bce_dice_loss, metrics=[dice_coeff])
