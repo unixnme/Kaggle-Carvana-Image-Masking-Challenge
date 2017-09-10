@@ -10,7 +10,7 @@ import os
 
 import params
 
-filepath= 'weights/best_weights_vgg16.hdf5'
+filepath= 'weights/best_weights_vgg16_re.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
