@@ -72,7 +72,7 @@ def vgg16(input_shape=(128, 128, 3), regularizer=None, optimizer=SGD, activation
     x8 = activation()(x8)
 
     x9 = UpSampling2D((2,2))(x8)
-    x8 = Concatenate(axis=-1)([x9, x1])
+    x9 = Concatenate(axis=-1)([x9, x1])
     x9 = Conv2D(64, (3, 3), padding='same', kernel_regularizer=regularizer)(x9)
     x9 = BatchNormalization()(x9)
     x9 = activation()(x9)

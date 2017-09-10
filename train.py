@@ -10,14 +10,14 @@ import os
 
 import params
 
-filepath= 'weights/best_weights_vgg16.hdf5'
+filepath= 'vgg16.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
 model = params.model_factory((rows,cols,3),
         optimizer=
-        optimizers.SGD(lr=1e-3, momentum=0.9, accum_iters=5),
+        optimizers.SGD(lr=1e-2, momentum=0.9, accum_iters=5),
         #RMSprop(lr=1e-4),
         regularizer=keras.regularizers.l2(1e-4))
 model.load_weights('/home/linuxnme/.keras/models/vgg16_weights_tf_dim_ordering_tf_kernels.h5', by_name=True)
