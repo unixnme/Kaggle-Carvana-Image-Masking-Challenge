@@ -2,7 +2,7 @@ import cv2
 import keras
 import numpy as np
 import pandas as pd
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, TensorBoard
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, TensorBoard, LearningRateScheduler
 from keras.optimizers import SGD, RMSprop
 from model import optimizers
 from sklearn.model_selection import train_test_split
@@ -10,16 +10,21 @@ import os
 
 import params
 
-filepath= 'weights/best_weights.hdf5'
+filepath= 'weights/best_weights_unet_1024.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
+learning_rate = 1e-2
+half_life = 16
 model = params.model_factory(input_shape=(rows,cols,3),
         optimizer=
-        optimizers.SGD(lr=1e-4, momentum=0.9, accum_iters=10),
+        optimizers.SGD(lr=1e-4, momentum=0.9, accum_iters=3),
         #RMSprop(lr=1e-4),
-        regularizer=keras.regularizers.l2(1e-3))
+        regularizer=keras.regularizers.l2(1e-4))
+
+if os.path.isfile(filepath):
+    model.load_weights(filepath, by_name=True)
 
 df_train = pd.read_csv('input/train_masks.csv')
 ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -29,6 +34,10 @@ ids_train_split, ids_valid_split = train_test_split(ids_train, test_size=0.2, ra
 print('Training on {} samples'.format(len(ids_train_split)))
 print('Validating on {} samples'.format(len(ids_valid_split)))
 
+def step_decay(epoch):
+    lr = learning_rate * np.power(0.5, epoch/float(half_life))
+    print 'learning rate =', lr
+    return lr
 
 def randomHueSaturationValue(image, hue_shift_limit=(-180, 180),
                              sat_shift_limit=(-255, 255),
@@ -147,23 +156,12 @@ def valid_generator():
 
 
 if __name__ == '__main__':
-    callbacks = [EarlyStopping(monitor='val_loss',
-                               patience=8,
-                               verbose=1,
-                               min_delta=1e-4),
-                 ReduceLROnPlateau(monitor='val_loss',
-                                   factor=0.1,
-                                   patience=4,
-                                   verbose=1,
-                                   epsilon=1e-4),
-                 ModelCheckpoint(monitor='val_loss',
+    callbacks = [ModelCheckpoint(monitor='val_loss',
                                  filepath=filepath,
                                  save_best_only=True,
                                  save_weights_only=True),
+                 LearningRateScheduler(step_decay),
                  TensorBoard(log_dir='logs')]
-
-    if os.path.isfile(filepath):
-        model.load_weights(filepath, by_name=True)
 
     model.fit_generator(generator=train_generator(),
                         steps_per_epoch=np.ceil(float(len(ids_train_split)) / float(batch_size)),

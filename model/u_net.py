@@ -408,7 +408,7 @@ def get_unet_512(optimizer, input_shape=(512, 512, 3),
 
 
 def get_unet_1024(optimizer, input_shape=(1024, 1024, 3),
-                  num_classes=1, regularizer=None, activation=leaky):
+                  num_classes=1, regularizer=None, activation=relu):
     inputs = Input(shape=input_shape)
     # 1024
 
