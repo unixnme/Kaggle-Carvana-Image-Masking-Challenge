@@ -125,7 +125,7 @@ def train_generator():
                 img, mask = randomShiftScaleRotate(img, mask,
                                                    shift_limit=(-0.0625, 0.0625),
                                                    scale_limit=(-0.1, 0.1),
-                                                   rotate_limit=(-0, 0))
+                                                   rotate_limit=(-45, 45))
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
