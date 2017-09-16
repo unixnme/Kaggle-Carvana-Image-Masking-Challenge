@@ -9,18 +9,20 @@ from sklearn.model_selection import train_test_split
 import os
 import threading
 import params
+from model.u_net import leaky, relu
 
 filepath= 'weights/best_weights_unet_1024.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-learning_rate = 1e-2
+learning_rate = 1e-4
 half_life = 16
 model = params.model_factory(input_shape=(rows,cols,3),
         optimizer=
-        optimizers.SGD(lr=1e-4, momentum=0.9, accum_iters=3),
-        #RMSprop(lr=1e-4),
+        #optimizers.SGD(lr=1e-4, momentum=0.9, accum_iters=2),
+        RMSprop(lr=1e-4),
+        activation=leaky,
         regularizer=keras.regularizers.l2(1e-4))
 
 if os.path.isfile(filepath):
@@ -180,6 +182,7 @@ def valid_generator():
 if __name__ == '__main__':
     callbacks = [ModelCheckpoint(monitor='val_loss',
                                  filepath=filepath,
+                                 verbose=True,
                                  save_best_only=True,
                                  save_weights_only=True),
                  LearningRateScheduler(step_decay),
