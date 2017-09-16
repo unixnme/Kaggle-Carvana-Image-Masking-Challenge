@@ -20,7 +20,7 @@ model = params.model_factory((rows,cols,3),
         optimizers.SGD(lr=1e-3, momentum=0.9, accum_iters=5),
         #RMSprop(lr=1e-4),
         regularizer=keras.regularizers.l2(1e-4))
-model.load_weights('/home/linuxnme/.keras/models/vgg16_weights_tf_dim_ordering_tf_kernels.h5', by_name=True)
+model.load_weights('/Users/ykang7/.keras/models/vgg16_weights_tf_dim_ordering_tf_kernels.h5', by_name=True)
 model.summary()
 
 df_train = pd.read_csv('input/train_masks.csv')
@@ -123,7 +123,10 @@ def train_generator():
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255
+            x_batch = np.array(x_batch, np.float32)
+            x_batch[..., 0] -= 103.939
+            x_batch[..., 1] -= 116.779
+            x_batch[..., 2] -= 123.68
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
