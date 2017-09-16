@@ -7,7 +7,7 @@ from keras.optimizers import SGD, RMSprop
 from model import optimizers
 from sklearn.model_selection import train_test_split
 import os
-import threading
+import multiprocessing as mp
 import params
 from model.u_net import leaky, relu
 
@@ -105,60 +105,37 @@ def randomHorizontalFlip(image, mask, u=0.5):
 
     return image, mask
 
-class threadsafe_iter:
-    """Takes an iterator/generator and makes it thread-safe by
-    serializing call to the `next` method of given iterator/generator.
-    """
-    def __init__(self, it):
-        self.it = it
-        self.lock = threading.Lock()
+def process_image(id):
+    img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+    img = cv2.resize(img, (cols, rows))
+    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
+    mask = cv2.resize(mask, (cols, rows))
+    img = randomHueSaturationValue(img,
+                                   hue_shift_limit=(-50, 50),
+                                   sat_shift_limit=(-5, 5),
+                                   val_shift_limit=(-15, 15))
+    img, mask = randomShiftScaleRotate(img, mask,
+                                       shift_limit=(-0.0625, 0.0625),
+                                       scale_limit=(-0.1, 0.1),
+                                       rotate_limit=(-45, 45))
+    img, mask = randomHorizontalFlip(img, mask)
+    mask = np.expand_dims(mask, axis=2)
+    return img, mask
 
-    def __iter__(self):
-        return self
-
-    def next(self):
-        with self.lock:
-            return self.it.next()
-
-def threadsafe_generator(f):
-    """A decorator that takes a generator function and makes it thread-safe.
-    """
-    def g(*a, **kw):
-        return threadsafe_iter(f(*a, **kw))
-    return g
-
-@threadsafe_generator
 def train_generator():
     indices = np.array(ids_train_split.index)
     while True:
         np.random.shuffle(indices)
         for start in range(0, len(ids_train_split), batch_size):
-            x_batch = []
-            y_batch = []
             end = min(start + batch_size, len(ids_train_split))
             ids_train_batch = ids_train_split[indices[start:end]]
-            for id in ids_train_batch.values:
-                img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                img = cv2.resize(img, (cols, rows))
-                mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                mask = cv2.resize(mask, (cols, rows))
-                img = randomHueSaturationValue(img,
-                                               hue_shift_limit=(-50, 50),
-                                               sat_shift_limit=(-5, 5),
-                                               val_shift_limit=(-15, 15))
-                img, mask = randomShiftScaleRotate(img, mask,
-                                                   shift_limit=(-0.0625, 0.0625),
-                                                   scale_limit=(-0.1, 0.1),
-                                                   rotate_limit=(-45, 45))
-                img, mask = randomHorizontalFlip(img, mask)
-                mask = np.expand_dims(mask, axis=2)
-                x_batch.append(img)
-                y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255
-            y_batch = np.array(y_batch, np.float32) / 255
+            result = pool.map(process_image, ids_train_batch.values)
+            x_batch = [r[0] for r in result]
+            y_batch = [r[1] for r in result]
+            x_batch = np.asarray(x_batch, dtype=np.float32) / 255
+            y_batch = np.asarray(y_batch, dtype=np.float32) / 255
             yield x_batch, y_batch
 
-@threadsafe_generator
 def valid_generator():
     while True:
         for start in range(0, len(ids_valid_split), batch_size):
@@ -180,6 +157,7 @@ def valid_generator():
 
 
 if __name__ == '__main__':
+    pool = mp.multiprocessing.Pool(4)
     callbacks = [ModelCheckpoint(monitor='val_loss',
                                  filepath=filepath,
                                  verbose=True,
@@ -192,7 +170,6 @@ if __name__ == '__main__':
                         steps_per_epoch=np.ceil(float(len(ids_train_split)) / float(batch_size)),
                         epochs=epochs,
                         verbose=1,
-                        workers=4,
                         callbacks=callbacks,
                         validation_data=valid_generator(),
                         validation_steps=np.ceil(float(len(ids_valid_split)) / float(batch_size)))
