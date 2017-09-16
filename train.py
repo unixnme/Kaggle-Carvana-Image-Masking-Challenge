@@ -157,12 +157,12 @@ def valid_generator():
 
 
 if __name__ == '__main__':
-    pool = mp.multiprocessing.Pool(4)
+    pool = mp.Pool(4)
     callbacks = [ModelCheckpoint(monitor='val_loss',
                                  filepath=filepath,
                                  verbose=True,
                                  save_best_only=True,
-                                 save_weights_only=True),
+                                 save_weights_only=False),
                  LearningRateScheduler(step_decay),
                  TensorBoard(log_dir='logs')]
 
@@ -173,3 +173,5 @@ if __name__ == '__main__':
                         callbacks=callbacks,
                         validation_data=valid_generator(),
                         validation_steps=np.ceil(float(len(ids_valid_split)) / float(batch_size)))
+    pool.close()
+    pool.join()
