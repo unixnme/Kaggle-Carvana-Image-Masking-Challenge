@@ -1,9 +1,10 @@
 import keras
 from keras.models import Model
-from keras.layers import Input, concatenate, Conv2D, MaxPooling2D, Activation, UpSampling2D, BatchNormalization, Add
+from keras.layers import Input, concatenate, Conv2D, MaxPooling2D, Activation, UpSampling2D, BatchNormalization, Add, Lambda
 from keras.optimizers import RMSprop
+import keras.backend as K
 
-from model.losses import bce_dice_loss, dice_loss, weighted_bce_dice_loss, weighted_dice_loss, dice_coeff
+from model.losses import bce_dice_loss, dice_loss, weighted_bce_dice_loss, weighted_dice_loss, dice_coeff, sparse_cce_dice_loss
 
 def leaky():
     return keras.layers.advanced_activations.LeakyReLU(alpha=0.1)
@@ -581,7 +582,8 @@ def get_unet_1024(optimizer, input_shape=(1024, 1024, 3),
     up0b = activation()(up0b)
     # 1024
 
-    classify = Conv2D(num_classes, (1, 1), activation='sigmoid')(up0b)
+    classify = Conv2D(num_classes, (1, 1), activation='softmax', name='s')(up0b)
+    classify = Lambda(lambda x: K.expand_dims(x[...,1], -1))(classify)
 
     model = Model(inputs=inputs, outputs=classify)
 
