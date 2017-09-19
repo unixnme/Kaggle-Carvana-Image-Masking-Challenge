@@ -108,6 +108,8 @@ def randomHorizontalFlip(image, mask, u=0.5):
 
 def train_generator():
     indices = np.array(ids_train_split.index)
+    x_memory = {}
+    y_memory = {}
     while True:
         np.random.shuffle(indices)
         for start in range(0, len(ids_train_split), batch_size):
@@ -116,9 +118,16 @@ def train_generator():
             end = min(start + batch_size, len(ids_train_split))
             ids_train_batch = ids_train_split[indices[start:end]]
             for id in ids_train_batch.values:
-                img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+                if x_memory.has_key(id):
+                    img = x_memory[id]
+                    mask = y_memory[id]
+                else:
+                    img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
+                    x_memory[id] = img
+                    y_memory[id] = mask
+
                 img = cv2.resize(img, (cols, rows))
-                mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
                 mask = cv2.resize(mask, (cols, rows))
                 img = randomHueSaturationValue(img,
                                                hue_shift_limit=(-50, 50),
@@ -137,6 +146,8 @@ def train_generator():
             yield x_batch, y_batch
 
 def valid_generator():
+    x_memory = {}
+    y_memory = {}
     while True:
         for start in range(0, len(ids_valid_split), batch_size):
             x_batch = []
@@ -144,9 +155,15 @@ def valid_generator():
             end = min(start + batch_size, len(ids_valid_split))
             ids_valid_batch = ids_valid_split[start:end]
             for id in ids_valid_batch.values:
-                img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+                if x_memory.has_key(id):
+                    img = x_memory[id]
+                    mask = y_memory[id]
+                else:
+                    img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
+                    x_memory[id] = img
+                    y_memory[id] = mask
                 img = cv2.resize(img, (cols, rows))
-                mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
                 mask = cv2.resize(mask, (cols, rows))
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
