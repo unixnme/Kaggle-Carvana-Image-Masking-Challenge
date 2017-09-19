@@ -582,7 +582,7 @@ def get_unet_1024(optimizer, input_shape=(1024, 1024, 3),
     up0b = activation()(up0b)
     # 1024
 
-    classify = Conv2D(num_classes, (1, 1), activation='softmax', name='s')(up0b)
+    classify = Conv2D(num_classes, (1, 1), activation='softmax')(up0b)
     classify = Lambda(lambda x: K.expand_dims(x[...,1], -1))(classify)
 
     model = Model(inputs=inputs, outputs=classify)
