@@ -16,13 +16,13 @@ rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-learning_rate = 1e-3
+learning_rate = 1e-2
 half_life = 16
 model = params.model_factory(input_shape=(rows,cols,3),
         num_classes=2,
         optimizer=
-        #optimizers.SGD(lr=1e-4, momentum=0.95, accum_iters=5),
-        RMSprop(lr=1e-4),
+        optimizers.SGD(lr=1e-4, momentum=0.95, accum_iters=5),
+        #RMSprop(lr=1e-4),
         activation=leaky,
         regularizer=keras.regularizers.l2(1e-4))
 
@@ -108,8 +108,6 @@ def randomHorizontalFlip(image, mask, u=0.5):
 
 def train_generator():
     indices = np.array(ids_train_split.index)
-    x_memory = {}
-    y_memory = {}
     while True:
         np.random.shuffle(indices)
         for start in range(0, len(ids_train_split), batch_size):
@@ -118,17 +116,11 @@ def train_generator():
             end = min(start + batch_size, len(ids_train_split))
             ids_train_batch = ids_train_split[indices[start:end]]
             for id in ids_train_batch.values:
-                if x_memory.has_key(id):
-                    img = x_memory[id]
-                    mask = y_memory[id]
-                else:
-                    img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                    x_memory[id] = img
-                    y_memory[id] = mask
-
+                img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+                mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
                 img = cv2.resize(img, (cols, rows))
-                mask = cv2.resize(mask, (cols, rows))
+                mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
+
                 img = randomHueSaturationValue(img,
                                                hue_shift_limit=(-50, 50),
                                                sat_shift_limit=(-5, 5),
@@ -146,8 +138,6 @@ def train_generator():
             yield x_batch, y_batch
 
 def valid_generator():
-    x_memory = {}
-    y_memory = {}
     while True:
         for start in range(0, len(ids_valid_split), batch_size):
             x_batch = []
@@ -155,16 +145,10 @@ def valid_generator():
             end = min(start + batch_size, len(ids_valid_split))
             ids_valid_batch = ids_valid_split[start:end]
             for id in ids_valid_batch.values:
-                if x_memory.has_key(id):
-                    img = x_memory[id]
-                    mask = y_memory[id]
-                else:
-                    img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                    x_memory[id] = img
-                    y_memory[id] = mask
+                img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+                mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
                 img = cv2.resize(img, (cols, rows))
-                mask = cv2.resize(mask, (cols, rows))
+                mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
