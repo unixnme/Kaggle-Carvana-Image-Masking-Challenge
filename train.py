@@ -11,19 +11,20 @@ import threading
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_unet_1024_1536_softmax.hdf5'
+filepath= 'weights/best_weights_unet_1024_1536_softmax_adam.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-learning_rate = 1e-2
+learning_rate = 1e-3
 half_life = 16
 model = params.model_factory(input_shape=(rows,cols,3),
         num_classes=2,
         optimizer=
+        #optimizers.Adam(lr=1e-3),
         optimizers.SGD(lr=1e-4, momentum=0.95, accum_iters=5),
         #RMSprop(lr=1e-4),
-        activation=leaky,
+        activation=relu,
         regularizer=keras.regularizers.l2(1e-4))
 
 if os.path.isfile(filepath):

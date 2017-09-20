@@ -1,19 +1,26 @@
 import cv2
+import keras
 import numpy as np
 import pandas as pd
 import threading
-import queue
+from multiprocessing import Queue
 import tensorflow as tf
 from tqdm import tqdm
+from model.u_net import leaky, relu
 
 import params
 
-input_size = params.input_size
+rows = params.rows
+cols = params.cols
 batch_size = params.batch_size
 orig_width = params.orig_width
 orig_height = params.orig_height
 threshold = params.threshold
-model = params.model_factory()
+model = params.model_factory(input_shape=(rows,cols,3),
+        num_classes=2,
+        optimizer=keras.optimizers.SGD(),
+        activation=leaky,
+        regularizer=keras.regularizers.l2(1e-4))
 
 df_test = pd.read_csv('input/sample_submission.csv')
 ids_test = df_test['img'].map(lambda s: s.split('.')[0])
@@ -38,7 +45,7 @@ def run_length_encode(mask):
 
 rles = []
 
-model.load_weights(filepath='weights/best_weights.hdf5')
+model.load_weights(filepath='weights/best_weights_unet_1024_1536_softmax.hdf5')
 graph = tf.get_default_graph()
 
 q_size = 10
@@ -50,8 +57,8 @@ def data_loader(q, ):
         end = min(start + batch_size, len(ids_test))
         ids_test_batch = ids_test[start:end]
         for id in ids_test_batch.values:
-            img = cv2.imread('input/test/{}.jpg'.format(id))
-            img = cv2.resize(img, (input_size, input_size))
+            img = cv2.imread('input/test_hq/{}.jpg'.format(id))
+            img = cv2.resize(img, (cols, rows))
             x_batch.append(img)
         x_batch = np.array(x_batch, np.float32) / 255
         q.put(x_batch)
@@ -70,7 +77,7 @@ def predictor(q, ):
             rles.append(rle)
 
 
-q = queue.Queue(maxsize=q_size)
+q = Queue(maxsize=q_size)
 t1 = threading.Thread(target=data_loader, name='DataLoader', args=(q,))
 t2 = threading.Thread(target=predictor, name='Predictor', args=(q,))
 print('Predicting on {} samples with batch_size = {}...'.format(len(ids_test), batch_size))
