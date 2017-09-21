@@ -11,7 +11,7 @@ import threading
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_unet_1024_1536_softmax_adam.hdf5'
+filepath= 'weights/best_weights_unet_1024_1536_softmax.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
@@ -24,7 +24,7 @@ model = params.model_factory(input_shape=(rows,cols,3),
         #optimizers.Adam(lr=1e-3),
         optimizers.SGD(lr=1e-4, momentum=0.95, accum_iters=5),
         #RMSprop(lr=1e-4),
-        activation=relu,
+        activation=leaky,
         regularizer=keras.regularizers.l2(1e-4))
 
 if os.path.isfile(filepath):
@@ -92,7 +92,7 @@ def randomShiftScaleRotate(image, mask,
                                     borderValue=(
                                         0, 0,
                                         0,))
-        mask = cv2.warpPerspective(mask, mat, (width, height), flags=cv2.INTER_LINEAR, borderMode=borderMode,
+        mask = cv2.warpPerspective(mask, mat, (width, height), flags=cv2.INTER_NEAREST, borderMode=borderMode,
                                    borderValue=(
                                        0, 0,
                                        0,))
@@ -119,7 +119,7 @@ def train_generator():
             for id in ids_train_batch.values:
                 img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                 mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                img = cv2.resize(img, (cols, rows))
+                img = cv2.resize(img, (cols, rows), cv2.INTER_LINEAR)
                 mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
 
                 img = randomHueSaturationValue(img,
@@ -148,7 +148,7 @@ def valid_generator():
             for id in ids_valid_batch.values:
                 img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                 mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                img = cv2.resize(img, (cols, rows))
+                img = cv2.resize(img, (cols, rows), cv2.INTER_LINEAR)
                 mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
