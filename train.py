@@ -16,7 +16,7 @@ rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-learning_rate = 1e-2
+learning_rate = 0.00648419777326
 half_life = 16
 model = params.model_factory(input_shape=(rows,cols,3),
         num_classes=2,
@@ -190,10 +190,10 @@ if __name__ == '__main__':
                  LearningRateScheduler(step_decay),
                  TensorBoard(log_dir='logs')]
 
-    model.fit_generator(generator=train_generator(),
+    model.fit_generator(generator=train_generator(True),
                         steps_per_epoch=np.ceil(float(len(ids_train_split)) / float(batch_size)),
                         epochs=epochs,
                         verbose=1,
                         callbacks=callbacks,
-                        validation_data=valid_generator(),
+                        validation_data=valid_generator(True),
                         validation_steps=np.ceil(float(len(ids_valid_split)) / float(batch_size)))
