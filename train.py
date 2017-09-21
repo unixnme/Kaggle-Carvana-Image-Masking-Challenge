@@ -107,8 +107,9 @@ def randomHorizontalFlip(image, mask, u=0.5):
 
     return image, mask
 
-def train_generator():
+def train_generator(save_to_ram=False):
     indices = np.array(ids_train_split.index)
+    cache = {}
     while True:
         np.random.shuffle(indices)
         for start in range(0, len(ids_train_split), batch_size):
@@ -117,10 +118,20 @@ def train_generator():
             end = min(start + batch_size, len(ids_train_split))
             ids_train_batch = ids_train_split[indices[start:end]]
             for id in ids_train_batch.values:
-                img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                img = cv2.resize(img, (cols, rows), cv2.INTER_LINEAR)
-                mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
+                if save_to_ram is True:
+                    if cache.has_key(id):
+                        img, mask = cache[id]
+                    else:
+                        img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+                        mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
+                        img = cv2.resize(img, (cols, rows), cv2.INTER_LINEAR)
+                        mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
+                        cache[id] = (img, mask)
+                else:
+                    img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
+                    img = cv2.resize(img, (cols, rows), cv2.INTER_LINEAR)
+                    mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
 
                 img = randomHueSaturationValue(img,
                                                hue_shift_limit=(-50, 50),
@@ -138,7 +149,8 @@ def train_generator():
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
-def valid_generator():
+def valid_generator(save_to_ram=False):
+    cache = {}
     while True:
         for start in range(0, len(ids_valid_split), batch_size):
             x_batch = []
@@ -146,10 +158,21 @@ def valid_generator():
             end = min(start + batch_size, len(ids_valid_split))
             ids_valid_batch = ids_valid_split[start:end]
             for id in ids_valid_batch.values:
-                img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                img = cv2.resize(img, (cols, rows), cv2.INTER_LINEAR)
-                mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
+                if save_to_ram is True:
+                    if cache.has_key(id):
+                        img, mask = cache[id]
+                    else:
+                        img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+                        mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
+                        img = cv2.resize(img, (cols, rows), cv2.INTER_LINEAR)
+                        mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
+                        cache[id] = (img, mask)
+                else:
+                    img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
+                    img = cv2.resize(img, (cols, rows), cv2.INTER_LINEAR)
+                    mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
+                    
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
