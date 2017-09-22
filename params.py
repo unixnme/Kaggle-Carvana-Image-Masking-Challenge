@@ -1,8 +1,8 @@
 from model.u_net import get_unet_128, get_unet_256, get_unet_512, get_unet_1024
 from model.densenet import dense_net_128, densenet
 
-cols = 960
-rows = 640
+cols = 1024
+rows = 1024
 
 max_epochs = 100
 batch_size = 10

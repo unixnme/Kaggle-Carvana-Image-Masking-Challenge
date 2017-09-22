@@ -7,6 +7,7 @@ from multiprocessing import Queue
 import tensorflow as tf
 from tqdm import tqdm
 from model.u_net import leaky, relu
+from keras.optimizers import SGD
 
 import params
 
@@ -18,7 +19,9 @@ orig_height = params.orig_height
 threshold = params.threshold
 model = params.model_factory(input_shape=(rows,cols,3),
         num_classes=2,
-        optimizer=keras.optimizers.SGD(),
+        optimizer=
+        SGD(lr=1e-4, momentum=0.95),
+        #RMSprop(lr=1e-4),
         activation=leaky,
         regularizer=keras.regularizers.l2(1e-4))
 
@@ -45,7 +48,7 @@ def run_length_encode(mask):
 
 rles = []
 
-model.load_weights(filepath='weights/best_weights_unet_1024_1536_softmax.hdf5')
+model.load_weights(filepath='weights/best_weights_unet_1024_softmax.hdf5')
 graph = tf.get_default_graph()
 
 q_size = 10
