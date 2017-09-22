@@ -18,7 +18,7 @@ epochs = params.max_epochs
 batch_size = params.batch_size
 learning_rate = 1e-2
 half_life = 16
-crop_size = 256
+crop_size = 512
 model = params.model_factory(
         num_classes=1,
         optimizer=
@@ -198,10 +198,10 @@ if __name__ == '__main__':
                  LearningRateScheduler(step_decay),
                  TensorBoard(log_dir='logs')]
 
-    model.fit_generator(generator=train_generator(True),
+    model.fit_generator(generator=train_generator(False),
                         steps_per_epoch=np.ceil(float(len(ids_train_split)) / float(batch_size)),
                         epochs=epochs,
                         verbose=1,
                         callbacks=callbacks,
-                        validation_data=valid_generator(True),
+                        validation_data=valid_generator(False),
                         validation_steps=np.ceil(float(len(ids_valid_split)) / float(batch_size)))
