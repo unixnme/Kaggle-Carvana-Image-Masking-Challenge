@@ -11,15 +11,16 @@ import threading
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_densenet.hdf5'
+filepath= 'weights/best_weights_unet_256_crop.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
 learning_rate = 1e-2
 half_life = 16
-model = params.model_factory(input_shape=(rows,cols,3),
-        num_classes=2,
+crop_size = 256
+model = params.model_factory(
+        num_classes=1,
         optimizer=
         #optimizers.Adam(lr=1e-3),
         SGD(lr=1e-4, momentum=0.95, nesterov=True),
@@ -107,6 +108,11 @@ def randomHorizontalFlip(image, mask, u=0.5):
 
     return image, mask
 
+def randomCrop(img, mask, crop_size):
+    x0 = np.random.randint(img.shape[1] - crop_size)
+    y0 = np.random.randint(img.shape[0] - crop_size)
+    return img[y0:y0+crop_size, x0:x0+crop_size, :], mask[y0:y0+crop_size, x0:x0+crop_size]
+
 def train_generator(save_to_ram=False):
     indices = np.array(ids_train_split.index)
     cache = {}
@@ -141,6 +147,7 @@ def train_generator(save_to_ram=False):
                                                    shift_limit=(-0.0625, 0.0625),
                                                    scale_limit=(-0.1, 0.1),
                                                    rotate_limit=(-45, 45))
+                img, mask = randomCrop(img, mask, crop_size)
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
@@ -172,7 +179,8 @@ def valid_generator(save_to_ram=False):
                     mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
                     img = cv2.resize(img, (cols, rows), cv2.INTER_LINEAR)
                     mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
-                    
+
+                img, mask = randomCrop(img, mask, crop_size)
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
