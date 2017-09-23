@@ -126,3 +126,48 @@ def dense_net_128(input_shape=(256,256,3), optimizer=SGD(), activation=relu, reg
     model.compile(optimizer=optimizer, loss=bce_dice_loss, metrics=[dice_coeff])
 
     return model
+
+
+
+
+def densenet(input_shape=(256,256,3), optimizer=SGD(), activation=relu, regularizer=None, num_classes=1):
+    def dense_layer(x, xc):
+        zc = concatenate([x, xc])
+        z = Conv2D(32, [1,1], padding='same', kernel_regularizer=regularizer)(zc)
+        z = activation()(z)
+        z = Conv2D(32, [3, 3], padding='same', kernel_regularizer=regularizer)(z)
+        z = activation()(z)
+        z = Conv2D(32, [3, 3], padding='same', kernel_regularizer=regularizer)(z)
+        z = activation()(z)
+        z = Conv2D(32, [3, 3], padding='same', kernel_regularizer=regularizer)(z)
+        z = activation()(z)
+        return z, zc
+
+    img_input = Input(shape=input_shape)
+    x0 = Conv2D(32, [3,3], padding='same', kernel_regularizer=regularizer)(img_input)
+    x0 = activation()(x0)
+    x0 = Conv2D(32, [3,3], padding='same', kernel_regularizer=regularizer)(x0)
+    x0 = activation()(x0)
+    x0 = Conv2D(32, [3,3], padding='same', kernel_regularizer=regularizer)(x0)
+    x0 = activation()(x0)
+
+    x1 = Conv2D(32, [3,3], padding='same', kernel_regularizer=regularizer)(x0)
+    x1 = activation()(x1)
+    x1 = Conv2D(32, [3, 3], padding='same', kernel_regularizer=regularizer)(x1)
+    x1 = activation()(x1)
+    x1 = Conv2D(32, [3, 3], padding='same', kernel_regularizer=regularizer)(x1)
+    x1 = activation()(x1)
+
+    x = x1
+    xc = x0
+
+    for i in range(41):
+        x, xc = dense_layer(x, xc)
+
+    x = Conv2D(num_classes, [1,1], padding='same', kernel_regularizer=regularizer)(x)
+    x = Activation('sigmoid')(x)
+
+    model = keras.models.Model(inputs=img_input, outputs=x)
+    model.compile(optimizer=optimizer, loss=bce_dice_loss, metrics=[dice_coeff])
+
+    return model

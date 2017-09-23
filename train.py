@@ -11,7 +11,7 @@ import threading
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_unet_256_crop.hdf5'
+filepath= 'weights/best_weights_densenet_256_crop.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
