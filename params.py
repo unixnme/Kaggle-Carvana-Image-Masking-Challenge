@@ -5,7 +5,7 @@ cols = 480
 rows = 320
 
 max_epochs = 100
-batch_size = 5
+batch_size = 10
 
 orig_width = 1918
 orig_height = 1280
