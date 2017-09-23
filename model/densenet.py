@@ -130,7 +130,7 @@ def dense_net_128(input_shape=(256,256,3), optimizer=SGD(), activation=relu, reg
 
 
 
-def densenet(input_shape=(256,256,3), optimizer=SGD(), activation=relu, regularizer=None, num_classes=1):
+def densenet(input_shape=(128,128,3), optimizer=SGD(), activation=relu, regularizer=None, num_classes=1):
     def dense_layer(x, xc):
         zc = concatenate([x, xc])
         z = Conv2D(32, [1,1], padding='same', kernel_regularizer=regularizer)(zc)
@@ -161,7 +161,7 @@ def densenet(input_shape=(256,256,3), optimizer=SGD(), activation=relu, regulari
     x = x1
     xc = x0
 
-    for i in range(41):
+    for i in range(21):
         x, xc = dense_layer(x, xc)
 
     x = Conv2D(num_classes, [1,1], padding='same', kernel_regularizer=regularizer)(x)

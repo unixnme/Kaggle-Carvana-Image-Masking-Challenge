@@ -11,14 +11,14 @@ import threading
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_densenet_256_crop.hdf5'
+filepath= 'weights/best_weights_densenet_128_crop.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
 learning_rate = 1e-2
 half_life = 16
-crop_size = 512
+crop_size = 128
 model = params.model_factory(
         num_classes=1,
         optimizer=
