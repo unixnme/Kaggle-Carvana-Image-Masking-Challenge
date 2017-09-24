@@ -20,7 +20,7 @@ crop_size = 256
 model = params.model_factory(input_shape=(None, None, 3),
         num_classes=1,
         optimizer=
-        SGD(lr=1e-4, momentum=0.95, nesterov=True),
+        SGD(lr=learning_rate, momentum=0.95, nesterov=True),
         activation=relu,
         regularizer=keras.regularizers.l2(1e-4))
 
@@ -194,7 +194,6 @@ if __name__ == '__main__':
                                    patience=5,
                                    verbose=1,
                                    epsilon=1e-5),
-                 LearningRateScheduler(step_decay),
                  TensorBoard(log_dir='logs')]
 
     model.fit_generator(generator=train_generator(False),
