@@ -5,7 +5,7 @@ from model.vgg16 import get_vgg16
 cols = 960
 rows = 640
 
-max_epochs = 100
+max_epochs = 1000
 batch_size = 10
 
 orig_width = 1918

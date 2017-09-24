@@ -15,7 +15,7 @@ cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
 learning_rate = 1e-2
-half_life = 16
+half_life = 160
 crop_size = 256
 model = params.model_factory(input_shape=(None, None, 3),
         num_classes=1,
@@ -39,6 +39,12 @@ def step_decay(epoch):
     lr = learning_rate * np.power(0.5, epoch/float(half_life))
     print 'learning rate =', lr
     return lr
+
+def preprocess_input(x_batch):
+    x_batch[..., 0] -= 103.939
+    x_batch[..., 1] -= 116.779
+    x_batch[..., 2] -= 123.68
+    return x_batch
 
 def randomHueSaturationValue(image, hue_shift_limit=(-180, 180),
                              sat_shift_limit=(-255, 255),
@@ -85,7 +91,7 @@ def randomShiftScaleRotate(image, mask,
         box0 = box0.astype(np.float32)
         box1 = box1.astype(np.float32)
         mat = cv2.getPerspectiveTransform(box0, box1)
-        image = cv2.warpPerspective(image, mat, (width, height), flags=cv2.INTER_LINEAR, borderMode=borderMode,
+        image = cv2.warpPerspective(image, mat, (width, height), borderMode=borderMode,
                                     borderValue=(
                                         0, 0,
                                         0,))
@@ -125,7 +131,7 @@ def train_generator(save_to_ram=False):
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                     mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                    img = cv2.resize(img, (cols, rows), cv2.INTER_LINEAR)
+                    img = cv2.resize(img, (cols, rows))
                     mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
                 if save_to_ram is True:
                     cache[id] = (img, mask)
@@ -137,13 +143,15 @@ def train_generator(save_to_ram=False):
                 img, mask = randomShiftScaleRotate(img, mask,
                                                    shift_limit=(-0.0625, 0.0625),
                                                    scale_limit=(-0.1, 0.1),
-                                                   rotate_limit=(-45, 45))
+                                                   rotate_limit=(-45, 45),
+                                                   u=1)
                 img, mask = randomCrop(img, mask, crop_size)
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255
+            x_batch = np.array(x_batch, np.float32)
+            x_batch = preprocess_input(x_batch)
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -161,15 +169,16 @@ def valid_generator(save_to_ram=False):
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                     mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                    img = cv2.resize(img, (cols, rows), cv2.INTER_LINEAR)
+                    img = cv2.resize(img, (cols, rows))
                     mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
                 if save_to_ram is True:
-                    cache[ied] = (img, mask)
+                    cache[id] = (img, mask)
 
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255
+            x_batch = np.array(x_batch, np.float32)
+            x_batch = preprocess_input(x_batch)
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
