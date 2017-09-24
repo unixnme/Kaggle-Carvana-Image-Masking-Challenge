@@ -9,7 +9,7 @@ import os
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_vgg16_crop_no_preprocess.hdf5'
+filepath= 'weights/best_weights_vgg16_crop_preprocess_normalize.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
@@ -44,7 +44,7 @@ def preprocess_input(x_batch):
     x_batch[..., 0] -= 103.939
     x_batch[..., 1] -= 116.779
     x_batch[..., 2] -= 123.68
-    return x_batch
+    return x_batch / 255
 
 def randomHueSaturationValue(image, hue_shift_limit=(-180, 180),
                              sat_shift_limit=(-255, 255),
@@ -150,8 +150,8 @@ def train_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255
-            #x_batch = preprocess_input(x_batch)
+            x_batch = np.array(x_batch, np.float32)
+            x_batch = preprocess_input(x_batch)
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -177,8 +177,8 @@ def valid_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255
-            #x_batch = preprocess_input(x_batch)
+            x_batch = np.array(x_batch, np.float32)
+            x_batch = preprocess_input(x_batch)
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
