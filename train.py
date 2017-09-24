@@ -14,7 +14,7 @@ rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-learning_rate = 1e-2
+learning_rate = 1e-3
 half_life = 160
 crop_size = 256
 model = params.model_factory(input_shape=(None, None, 3),
