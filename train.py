@@ -2,16 +2,14 @@ import cv2
 import keras
 import numpy as np
 import pandas as pd
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, TensorBoard, LearningRateScheduler
+from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler
 from keras.optimizers import SGD, RMSprop
-from model import optimizers
 from sklearn.model_selection import train_test_split
 import os
-import threading
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_densenet_256_crop.hdf5'
+filepath= 'weights/best_weights_vgg16_crop.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
@@ -19,12 +17,10 @@ batch_size = params.batch_size
 learning_rate = 1e-2
 half_life = 16
 crop_size = 256
-model = params.model_factory(
+model = params.model_factory(input_shape=(None, None, 3),
         num_classes=1,
         optimizer=
-        #optimizers.Adam(lr=1e-3),
         SGD(lr=1e-4, momentum=0.95, nesterov=True),
-        #RMSprop(lr=1e-4),
         activation=relu,
         regularizer=keras.regularizers.l2(1e-4))
 
