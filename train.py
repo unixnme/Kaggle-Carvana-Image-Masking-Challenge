@@ -9,7 +9,7 @@ import os
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_vgg16_crop.hdf5'
+filepath= 'weights/best_weights_vgg16_crop_no_preprocess.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
@@ -150,8 +150,8 @@ def train_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32)
-            x_batch = preprocess_input(x_batch)
+            x_batch = np.array(x_batch, np.float32) / 255
+            #x_batch = preprocess_input(x_batch)
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -177,8 +177,8 @@ def valid_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32)
-            x_batch = preprocess_input(x_batch)
+            x_batch = np.array(x_batch, np.float32) / 255
+            #x_batch = preprocess_input(x_batch)
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
