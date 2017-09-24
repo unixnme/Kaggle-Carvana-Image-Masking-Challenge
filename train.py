@@ -2,7 +2,7 @@ import cv2
 import keras
 import numpy as np
 import pandas as pd
-from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler
+from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler, ReduceLROnPlateau
 from keras.optimizers import SGD, RMSprop
 from sklearn.model_selection import train_test_split
 import os
@@ -189,6 +189,11 @@ if __name__ == '__main__':
                                  verbose=True,
                                  save_best_only=True,
                                  save_weights_only=False),
+		 ReduceLROnPlateau(monitor='val_loss',
+				   factor=0.5,
+				   patience=5,
+				   verbose=1,
+				   epsilon=1e-5),
                  LearningRateScheduler(step_decay),
                  TensorBoard(log_dir='logs')]
 
