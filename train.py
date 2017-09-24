@@ -10,11 +10,12 @@ import params
 from model.u_net import leaky, relu
 
 filepath= 'weights/best_weights_vgg16_crop_no_preprocess.hdf5'
+vgg16_path = '/home/linuxnme/.keras/models/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-learning_rate = 1e-2
+learning_rate = 1e-3
 half_life = 160
 crop_size = 256
 model = params.model_factory(input_shape=(None, None, 3),
@@ -25,7 +26,11 @@ model = params.model_factory(input_shape=(None, None, 3),
         regularizer=keras.regularizers.l2(1e-4))
 
 if os.path.isfile(filepath):
+    print 'loading', filepath
     model.load_weights(filepath, by_name=True)
+else:
+    print 'loading', vgg16_path
+    model.load_weights(vgg16_path, by_name=True)
 
 df_train = pd.read_csv('input/train_masks.csv')
 ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -143,7 +148,7 @@ def train_generator(save_to_ram=False):
                 img, mask = randomShiftScaleRotate(img, mask,
                                                    shift_limit=(-0.0625, 0.0625),
                                                    scale_limit=(-0.1, 0.1),
-                                                   rotate_limit=(-45, 45),
+                                                   rotate_limit=(-5, 5),
                                                    u=1)
                 img, mask = randomCrop(img, mask, crop_size)
                 img, mask = randomHorizontalFlip(img, mask)
