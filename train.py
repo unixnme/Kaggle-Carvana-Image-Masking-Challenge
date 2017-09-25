@@ -9,13 +9,13 @@ import os
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_vgg19_crop.hdf5'
+filepath= 'weights/best_weights_vgg19_crop_no_preprocess.hdf5'
 vgg16_path = '/home/linuxnme/.keras/models/vgg19_weights_tf_dim_ordering_tf_kernels.h5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-learning_rate = 1e-4
+learning_rate = 1e-3
 half_life = 160
 crop_size = 256
 model = params.model_factory(input_shape=(None, None, 3),
@@ -155,8 +155,8 @@ def train_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32)
-            x_batch = preprocess_input(x_batch)
+            x_batch = np.array(x_batch, np.float32) / 255
+            #x_batch = preprocess_input(x_batch)
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -182,8 +182,8 @@ def valid_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32)
-            x_batch = preprocess_input(x_batch)
+            x_batch = np.array(x_batch, np.float32) / 255
+            #x_batch = preprocess_input(x_batch)
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -194,11 +194,11 @@ if __name__ == '__main__':
                                  verbose=True,
                                  save_best_only=True,
                                  save_weights_only=False),
-		 ReduceLROnPlateau(monitor='val_loss',
-				   factor=0.5,
-				   patience=5,
-				   verbose=1,
-				   epsilon=1e-5),
+                 ReduceLROnPlateau(monitor='val_loss', 
+                                   factor=0.5,
+                                   patience=5,
+                                   verbose=1,
+                                   epsilon=1e-5),
                  TensorBoard(log_dir='logs')]
 
     model.fit_generator(generator=train_generator(False),
