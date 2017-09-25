@@ -9,8 +9,8 @@ import os
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_vgg16_crop.hdf5'
-vgg16_path = '/home/linuxnme/.keras/models/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
+filepath= 'weights/best_weights_vgg19_crop.hdf5'
+vgg16_path = '/home/linuxnme/.keras/models/vgg19_weights_tf_dim_ordering_tf_kernels.h5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
