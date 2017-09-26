@@ -9,13 +9,13 @@ import os
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_vgg16_crop.hdf5'
+filepath= 'weights/best_weights_vgg16_crop_BN.hdf5'
 vgg16_path = '/home/linuxnme/.keras/models/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-learning_rate = 1e-4
+learning_rate = 0.000500000023749
 half_life = 160
 crop_size = 256
 model = params.model_factory(input_shape=(None, None, 3),
