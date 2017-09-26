@@ -9,20 +9,20 @@ import os
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_vgg19_crop_preprocess_normalize.hdf5'
+filepath= 'weights/best_weights_vgg19_crop_preprocess_normalize_leaky.hdf5'
 vgg16_path = '/home/linuxnme/.keras/models/vgg19_weights_tf_dim_ordering_tf_kernels.h5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-learning_rate = 1e-2
+learning_rate = 1e-3
 half_life = 160
 crop_size = 256
 model = params.model_factory(input_shape=(None, None, 3),
         num_classes=1,
         optimizer=
         SGD(lr=learning_rate, momentum=0.95, nesterov=True),
-        activation=relu,
+        activation=leaky,
         regularizer=keras.regularizers.l2(1e-4))
 
 if os.path.isfile(filepath):
