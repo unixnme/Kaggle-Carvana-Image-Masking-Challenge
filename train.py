@@ -9,8 +9,8 @@ import os
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_vgg19_crop.hdf5'
-vgg16_path = '/home/linuxnme/.keras/models/vgg19_weights_tf_dim_ordering_tf_kernels.h5'
+filepath= 'weights/best_weights_resnet50_crop.hdf5'
+resnet_path = '/Users/ykang7/.keras/models/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
@@ -29,8 +29,8 @@ if os.path.isfile(filepath):
     print 'loading', filepath
     model.load_weights(filepath, by_name=True)
 else:
-    print 'loading', vgg16_path
-    model.load_weights(vgg16_path, by_name=True)
+    print 'loading', resnet_path
+    model.load_weights(resnet_path, by_name=True)
 
 df_train = pd.read_csv('input/train_masks.csv')
 ids_train = df_train['img'].map(lambda s: s.split('.')[0])
