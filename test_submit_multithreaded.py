@@ -8,22 +8,18 @@ import tensorflow as tf
 from tqdm import tqdm
 from model.u_net import leaky, relu
 from keras.optimizers import SGD
+from keras.models import load_model
+from model.losses import bce_dice_loss, dice_loss, weighted_bce_dice_loss, weighted_dice_loss, dice_coeff, sparse_cce_dice_loss
 
 import params
 
-rows = params.rows
-cols = params.cols
-batch_size = params.batch_size
+rows, cols = 1024, 1024
+batch_size = 10
 orig_width = params.orig_width
 orig_height = params.orig_height
 threshold = params.threshold
-model = params.model_factory(input_shape=(rows,cols,3),
-        num_classes=2,
-        optimizer=
-        SGD(lr=1e-4, momentum=0.95),
-        #RMSprop(lr=1e-4),
-        activation=leaky,
-        regularizer=keras.regularizers.l2(1e-4))
+model = load_model('weights/unet_1024_9960.hdf5', compile=False)
+model.compile(optimizer=SGD(), loss=bce_dice_loss, metrics=[dice_coeff])
 
 df_test = pd.read_csv('input/sample_submission.csv')
 ids_test = df_test['img'].map(lambda s: s.split('.')[0])
@@ -48,10 +44,9 @@ def run_length_encode(mask):
 
 rles = []
 
-model.load_weights(filepath='weights/best_weights_unet_1024_softmax.hdf5')
 graph = tf.get_default_graph()
 
-q_size = 10
+q_size = 4
 
 
 def data_loader(q, ):
