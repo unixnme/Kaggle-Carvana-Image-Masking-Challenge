@@ -1,6 +1,6 @@
 import keras
 from keras.models import Model
-from keras.layers import Conv2D, Input, MaxPooling2D, UpSampling2D, concatenate
+from keras.layers import Conv2D, Input, MaxPooling2D, UpSampling2D, concatenate, BatchNormalization
 from keras.optimizers import SGD
 from u_net import relu
 from model.losses import bce_dice_loss, dice_coeff
@@ -9,7 +9,8 @@ def get_vgg16(input_shape=(224,224,3), regularizer=None, activation=relu, num_cl
     img_input = Input(shape=input_shape)
 
     # Block 1 --> x1
-    x1 = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv1', trainable=False)(img_input)
+    x1 = BatchNormalization()(img_input)
+    x1 = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv1', trainable=False)(x1)
     x1 = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv2', trainable=False)(x1)
     x1p = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x1)
 
