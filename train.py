@@ -9,6 +9,7 @@ import os
 import params
 from model.u_net import leaky, relu
 from threadpool import ThreadPool
+from Queue import Queue
 
 filepath= 'weights/unet128.hdf5'
 rows = params.rows
@@ -168,15 +169,35 @@ def valid_preprocess(ids):
     y_batch = np.asarray(y_batch, np.float32) / 255
     return x_batch, y_batch
 
-def train_generator():
-    gen = iterator(ids_train_split, batch_size)
-    while True:
-        yield train_preprocess(next(gen).values)
+class train_generator(object):
+    def __init__(self, num_threads=2):
+        self.gen = iterator(ids_train_split, batch_size)
+        self.pool = ThreadPool(num_threads)
+        self.batch_queue = Queue(num_threads)
+        for _ in range(num_threads):
+            self.pool.add_task(train_preprocess, next(self.gen), self.callback)
+
+    def callback(self, batch):
+        self.batch_queue.put(batch)
+        self.pool.add_task(train_preprocess, next(self.gen), self.callback)
+
+    def next(self):
+        return self.batch_queue.get()
 
 def valid_generator():
-    gen = iterator(ids_valid_split, batch_size)
-    while True:
-        yield valid_preprocess(next(gen).values)
+    def __init__(self, num_threads=2):
+        self.gen = iterator(ids_valid_split, batch_size)
+        self.pool = ThreadPool(num_threads)
+        self.batch_queue = Queue(num_threads)
+        for _ in range(num_threads):
+            self.pool.add_task(valid_preprocess, next(self.gen), self.callback)
+
+    def callback(self, batch):
+        self.batch_queue.put(batch)
+        self.pool.add_task(valid_preprocess, next(self.gen), self.callback)
+
+    def next(self):
+        return self.batch_queue.get()
 
 if __name__ == '__main__':
     callbacks = [ModelCheckpoint(monitor='val_loss',
