@@ -184,7 +184,7 @@ class train_generator(object):
     def next(self):
         return self.batch_queue.get()
 
-def valid_generator():
+class valid_generator(object):
     def __init__(self, num_threads=2):
         self.gen = iterator(ids_valid_split, batch_size)
         self.pool = ThreadPool(num_threads)
@@ -212,10 +212,10 @@ if __name__ == '__main__':
 				   epsilon=1e-5),
                  TensorBoard(log_dir='logs')]
 
-    model.fit_generator(generator=train_generator(),
+    model.fit_generator(generator=train_generator(1),
                         steps_per_epoch=np.ceil(float(len(ids_train_split)) / float(batch_size)),
                         epochs=epochs,
                         verbose=1,
                         callbacks=callbacks,
-                        validation_data=valid_generator(),
+                        validation_data=valid_generator(1),
                         validation_steps=np.ceil(float(len(ids_valid_split)) / float(batch_size)))
