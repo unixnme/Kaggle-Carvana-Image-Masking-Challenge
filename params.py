@@ -3,8 +3,8 @@ from model.densenet import dense_net_128, densenet
 from model.vgg16 import get_vgg16, get_vgg19
 from model.resnet import ResNet50
 
-cols = 960
-rows = 640
+cols = 480
+rows = 320
 
 max_epochs = 1000
 batch_size = 10
@@ -14,4 +14,4 @@ orig_height = 1280
 
 threshold = 0.5
 
-model_factory = ResNet50
+model_factory = get_unet_128

@@ -8,16 +8,16 @@ from sklearn.model_selection import train_test_split
 import os
 import params
 from model.u_net import leaky, relu
+from threadpool import ThreadPool
 
-filepath= 'weights/best_weights_resnet50_crop.hdf5'
-resnet_path = '/Users/ykang7/.keras/models/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5'
+filepath= 'weights/unet128.hdf5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
 learning_rate = 1e-4
 half_life = 160
-crop_size = 256
+crop_size = 128
 model = params.model_factory(input_shape=(None, None, 3),
         num_classes=1,
         optimizer=
@@ -28,9 +28,6 @@ model = params.model_factory(input_shape=(None, None, 3),
 if os.path.isfile(filepath):
     print 'loading', filepath
     model.load_weights(filepath, by_name=True)
-else:
-    print 'loading', resnet_path
-    model.load_weights(resnet_path, by_name=True)
 
 df_train = pd.read_csv('input/train_masks.csv')
 ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -67,7 +64,6 @@ def randomHueSaturationValue(image, hue_shift_limit=(-180, 180),
         image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
 
     return image
-
 
 def randomShiftScaleRotate(image, mask,
                            shift_limit=(-0.0625, 0.0625),
@@ -107,7 +103,6 @@ def randomShiftScaleRotate(image, mask,
 
     return image, mask
 
-
 def randomHorizontalFlip(image, mask, u=0.5):
     if np.random.random() < u:
         image = cv2.flip(image, 1)
@@ -120,73 +115,68 @@ def randomCrop(img, mask, crop_size):
     y0 = np.random.randint(img.shape[0] - crop_size)
     return img[y0:y0+crop_size, x0:x0+crop_size, :], mask[y0:y0+crop_size, x0:x0+crop_size]
 
-def train_generator(save_to_ram=False):
-    indices = np.array(ids_train_split.index)
-    cache = {}
+def iterator(ids, batch_size):
+    indices = np.array(ids.index)
     while True:
         np.random.shuffle(indices)
-        for start in range(0, len(ids_train_split), batch_size):
-            x_batch = []
-            y_batch = []
-            end = min(start + batch_size, len(ids_train_split))
-            ids_train_batch = ids_train_split[indices[start:end]]
-            for id in ids_train_batch.values:
-                if save_to_ram is True and cache.has_key(id):
-                    img, mask = cache[id]
-                else:
-                    img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                    img = cv2.resize(img, (cols, rows))
-                    mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
-                if save_to_ram is True:
-                    cache[id] = (img, mask)
+        for start in range(0, len(ids), batch_size):
+            end = min(start + batch_size, len(ids))
+            ids_train_batch = ids[indices[start:end]]
+            yield ids_train_batch
 
-                img = randomHueSaturationValue(img,
-                                               hue_shift_limit=(-50, 50),
-                                               sat_shift_limit=(-5, 5),
-                                               val_shift_limit=(-15, 15))
-                img, mask = randomShiftScaleRotate(img, mask,
-                                                   shift_limit=(-0.0625, 0.0625),
-                                                   scale_limit=(-0.1, 0.1),
-                                                   rotate_limit=(-5, 5),
-                                                   u=1)
-                img, mask = randomCrop(img, mask, crop_size)
-                img, mask = randomHorizontalFlip(img, mask)
-                mask = np.expand_dims(mask, axis=2)
-                x_batch.append(img)
-                y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32)
-            x_batch = preprocess_input(x_batch)
-            y_batch = np.array(y_batch, np.float32) / 255
-            yield x_batch, y_batch
+def train_preprocess(ids):
+    x_batch = []
+    y_batch = []
+    for id in ids:
+        img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+        mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
+        img = cv2.resize(img, (cols, rows))
+        mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
 
-def valid_generator(save_to_ram=False):
-    cache = {}
+        img = randomHueSaturationValue(img,
+                                       hue_shift_limit=(-50, 50),
+                                       sat_shift_limit=(-5, 5),
+                                       val_shift_limit=(-15, 15))
+        img, mask = randomShiftScaleRotate(img, mask,
+                                           shift_limit=(-0.0625, 0.0625),
+                                           scale_limit=(-0.1, 0.1),
+                                           rotate_limit=(-5, 5),
+                                           u=1)
+        img, mask = randomCrop(img, mask, crop_size)
+        img, mask = randomHorizontalFlip(img, mask)
+        mask = np.expand_dims(mask, axis=2)
+        x_batch.append(img)
+        y_batch.append(mask)
+    x_batch = np.asarray(x_batch, np.float32)
+    x_batch = preprocess_input(x_batch)
+    y_batch = np.asarray(y_batch, np.float32) / 255
+    return x_batch, y_batch
+
+def valid_preprocess(ids):
+    x_batch = []
+    y_batch = []
+    for id in ids:
+        img = cv2.imread('input/train_hq/{}.jpg'.format(id))
+        mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
+        img = cv2.resize(img, (cols, rows))
+        mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
+        mask = np.expand_dims(mask, axis=2)
+        x_batch.append(img)
+        y_batch.append(mask)
+    x_batch = np.asarray(x_batch, np.float32)
+    x_batch = preprocess_input(x_batch)
+    y_batch = np.asarray(y_batch, np.float32) / 255
+    return x_batch, y_batch
+
+def train_generator():
+    gen = iterator(ids_train_split, batch_size)
     while True:
-        for start in range(0, len(ids_valid_split), batch_size):
-            x_batch = []
-            y_batch = []
-            end = min(start + batch_size, len(ids_valid_split))
-            ids_valid_batch = ids_valid_split[start:end]
-            for id in ids_valid_batch.values:
-                if save_to_ram is True and cache.has_hey(id):
-                    img, mask = cache[id]
-                else:
-                    img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
-                    img = cv2.resize(img, (cols, rows))
-                    mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
-                if save_to_ram is True:
-                    cache[id] = (img, mask)
+        yield train_preprocess(next(gen).values)
 
-                mask = np.expand_dims(mask, axis=2)
-                x_batch.append(img)
-                y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32)
-            x_batch = preprocess_input(x_batch)
-            y_batch = np.array(y_batch, np.float32) / 255
-            yield x_batch, y_batch
-
+def valid_generator():
+    gen = iterator(ids_valid_split, batch_size)
+    while True:
+        yield valid_preprocess(next(gen).values)
 
 if __name__ == '__main__':
     callbacks = [ModelCheckpoint(monitor='val_loss',
@@ -201,10 +191,10 @@ if __name__ == '__main__':
 				   epsilon=1e-5),
                  TensorBoard(log_dir='logs')]
 
-    model.fit_generator(generator=train_generator(False),
+    model.fit_generator(generator=train_generator(),
                         steps_per_epoch=np.ceil(float(len(ids_train_split)) / float(batch_size)),
                         epochs=epochs,
                         verbose=1,
                         callbacks=callbacks,
-                        validation_data=valid_generator(False),
+                        validation_data=valid_generator(),
                         validation_steps=np.ceil(float(len(ids_valid_split)) / float(batch_size)))
