@@ -115,10 +115,14 @@ def randomHorizontalFlip(image, mask, u=0.5):
 
     return image, mask
 
-def randomCrop(img, mask, crop_size):
-    x0 = np.random.randint(img.shape[1] - crop_size)
-    y0 = np.random.randint(img.shape[0] - crop_size)
-    return img[y0:y0+crop_size, x0:x0+crop_size, :], mask[y0:y0+crop_size, x0:x0+crop_size]
+def randomCrop(img, mask, crop_size=(rows,cols)):
+    x0 = 0
+    y0 = 0
+    if cols > img.shape[1]:
+        x0 = np.random.randint(img.shape[1] - cols)
+    if rows > img.shape[0]:
+        y0 = np.random.randint(img.shape[0] - rows)
+    return img[y0:y0+rows, x0:x0+cols, :], mask[y0:y0+rows, x0:x0+cols]
 
 def train_generator(save_to_ram=False):
     indices = np.array(ids_train_split.index)
@@ -150,13 +154,14 @@ def train_generator(save_to_ram=False):
                                                    scale_limit=(-0.1, 0.1),
                                                    rotate_limit=(-5, 5),
                                                    u=1)
-                img, mask = randomCrop(img, mask, crop_size)
+                crop_size_y = np.random.randint(4, 11) * 64
+                crop_size_x = np.random.randint(4, 16) * 64
+                img, mask = randomCrop(img, mask, crop_size=(crop_size_y, crop_size_x))
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32)
-            x_batch = preprocess_input(x_batch)
+            x_batch = np.array(x_batch, np.float32) / 255
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -182,8 +187,7 @@ def valid_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32)
-            x_batch = preprocess_input(x_batch)
+            x_batch = np.array(x_batch, np.float32) / 255
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -194,11 +198,11 @@ if __name__ == '__main__':
                                  verbose=True,
                                  save_best_only=True,
                                  save_weights_only=False),
-		 ReduceLROnPlateau(monitor='val_loss',
-				   factor=0.5,
-				   patience=5,
-				   verbose=1,
-				   epsilon=1e-5),
+                 ReduceLROnPlateau(monitor='val_loss', 
+                                   factor=0.5,
+                                   patience=5,
+                                   verbose=1,
+                                   epsilon=1e-5),
                  TensorBoard(log_dir='logs')]
 
     model.fit_generator(generator=train_generator(False),

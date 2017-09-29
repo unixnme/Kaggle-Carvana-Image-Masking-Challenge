@@ -170,13 +170,6 @@ def ResNet50(input_shape=None,
             or invalid input shape.
     """
 
-    # Determine proper input shape
-    input_shape = _obtain_input_shape(input_shape,
-                                      default_size=224,
-                                      min_size=197,
-                                      data_format=K.image_data_format(),
-                                      include_top=False)
-
     img_input = Input(shape=input_shape)
 
     bn_axis = 3
