@@ -9,13 +9,13 @@ import os
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_resnet50_crop.hdf5'
-resnet_path = '/Users/ykang7/.keras/models/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5'
+filepath= 'weights/best_weights_resnet50_crop_BN.hdf5'
+resnet_path = '/home/linuxnme/.keras/models/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5'
 rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-learning_rate = 1e-4
+learning_rate = 1e-3
 half_life = 160
 crop_size = 256
 model = params.model_factory(input_shape=(None, None, 3),
