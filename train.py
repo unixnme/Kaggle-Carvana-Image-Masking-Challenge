@@ -15,7 +15,7 @@ rows = params.rows
 cols = params.cols
 epochs = params.max_epochs
 batch_size = params.batch_size
-learning_rate = 1e-3
+learning_rate = 5e-4
 half_life = 160
 crop_size = 256
 model = params.model_factory(input_shape=(None, None, 3),
@@ -115,12 +115,13 @@ def randomHorizontalFlip(image, mask, u=0.5):
 
     return image, mask
 
-def randomCrop(img, mask, crop_size=(rows,cols)):
+def randomCrop(img, mask, crop_size):
+    rows, cols = crop_size
     x0 = 0
     y0 = 0
-    if cols > img.shape[1]:
+    if cols < img.shape[1]:
         x0 = np.random.randint(img.shape[1] - cols)
-    if rows > img.shape[0]:
+    if rows < img.shape[0]:
         y0 = np.random.randint(img.shape[0] - rows)
     return img[y0:y0+rows, x0:x0+cols, :], mask[y0:y0+rows, x0:x0+cols]
 
@@ -130,6 +131,8 @@ def train_generator(save_to_ram=False):
     while True:
         np.random.shuffle(indices)
         for start in range(0, len(ids_train_split), batch_size):
+            crop_size_y = np.random.randint(4, 11) * 64
+            crop_size_x = np.random.randint(4, 16) * 64
             x_batch = []
             y_batch = []
             end = min(start + batch_size, len(ids_train_split))
@@ -139,7 +142,8 @@ def train_generator(save_to_ram=False):
                     img, mask = cache[id]
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
+                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id))
+                    mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                     img = cv2.resize(img, (cols, rows))
                     mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
                 if save_to_ram is True:
@@ -154,8 +158,6 @@ def train_generator(save_to_ram=False):
                                                    scale_limit=(-0.1, 0.1),
                                                    rotate_limit=(-5, 5),
                                                    u=1)
-                crop_size_y = np.random.randint(4, 11) * 64
-                crop_size_x = np.random.randint(4, 16) * 64
                 img, mask = randomCrop(img, mask, crop_size=(crop_size_y, crop_size_x))
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
@@ -178,7 +180,8 @@ def valid_generator(save_to_ram=False):
                     img, mask = cache[id]
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id), cv2.IMREAD_GRAYSCALE)
+                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id))
+                    mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                     img = cv2.resize(img, (cols, rows))
                     mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
                 if save_to_ram is True:
