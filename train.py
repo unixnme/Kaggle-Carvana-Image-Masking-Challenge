@@ -8,13 +8,14 @@ from sklearn.model_selection import train_test_split
 import os
 import params
 from model.u_net import leaky, relu
+from keras.regularizers import l2
 
-filepath= 'weights/lyakaap.hdf5'
+filepath= 'weights/lyakaap_l2.hdf5'
 epochs = params.max_epochs
 batch_size = params.batch_size
 learning_rate = 2e-4
 model = params.model_factory(input_shape=(None, None, 3),
-                             init_nb=16)
+                             init_nb=16, regularizer=l2(1e-4))
 
 if os.path.isfile(filepath):
     print 'loading', filepath
