@@ -171,9 +171,12 @@ def valid_generator(save_to_ram=False):
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                     mask = cv2.imread('input/train_masks/{}_mask.png'.format(id))
+                    # zero pad
+                    pad = np.zeros(shape=(1280, 2, 3), dtype=np.uint8)
+                    img = np.concatenate((img, pad), axis=1)
+                    mask = np.concatenate((mask, pad), axis=1)
+                    # mask color to gray
                     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-                    img = cv2.resize(img, (cols, rows))
-                    mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
                 if save_to_ram is True:
                     cache[id] = (img, mask)
 
