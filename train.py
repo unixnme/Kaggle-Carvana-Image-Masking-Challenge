@@ -13,7 +13,8 @@ filepath= 'weights/lyakaap_BN.hdf5'
 epochs = params.max_epochs
 batch_size = params.batch_size
 learning_rate = 2e-4
-model = params.model_factory(input_shape=(None, None, 3))
+model = params.model_factory(input_shape=(None, None, 3),
+                             init_nb=16)
 
 if os.path.isfile(filepath):
     print 'loading', filepath
@@ -148,7 +149,6 @@ def train_generator(save_to_ram=False):
                                                    scale_limit=(-0.1, 0.1),
                                                    rotate_limit=(-5, 5),
                                                    u=1)
-                img, mask = randomCrop(img, mask, crop_size=(crop_size_y, crop_size_x))
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
@@ -195,8 +195,8 @@ if __name__ == '__main__':
                                  save_best_only=True,
                                  save_weights_only=False),
                  ReduceLROnPlateau(monitor='val_loss', 
-                                   factor=0.2,
-                                   patience=3,
+                                   factor=0.5,
+                                   patience=5,
                                    verbose=1,
                                    epsilon=1e-4,
                                    mode='max'),
