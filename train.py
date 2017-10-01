@@ -9,28 +9,15 @@ import os
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/best_weights_resnet50_crop_BN.hdf5'
-resnet_path = '/home/linuxnme/.keras/models/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5'
-rows = params.rows
-cols = params.cols
+filepath= 'weights/lyakaap.hdf5'
 epochs = params.max_epochs
 batch_size = params.batch_size
-learning_rate = 1e-3
-half_life = 160
-crop_size = 256
-model = params.model_factory(input_shape=(None, None, 3),
-        num_classes=1,
-        optimizer=
-        Adam(lr=learning_rate),
-        activation=relu,
-        regularizer=keras.regularizers.l2(1e-4))
+learning_rate = 2e-4
+model = params.model_factory(input_shape=(None, None, 3))
 
 if os.path.isfile(filepath):
     print 'loading', filepath
     model.load_weights(filepath, by_name=True)
-else:
-    print 'loading', resnet_path
-    model.load_weights(resnet_path, by_name=True)
 
 df_train = pd.read_csv('input/train_masks.csv')
 ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -143,9 +130,12 @@ def train_generator(save_to_ram=False):
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                     mask = cv2.imread('input/train_masks/{}_mask.png'.format(id))
+                    # zero pad
+                    pad = np.zeros(shape=(1280, 2, 3), dtype=np.uint8)
+                    img = np.concatenate((img, pad), axis=1)
+                    mask = np.concatenate((mask, pad), axis=1)
+                    # mask color to gray
                     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-                    img = cv2.resize(img, (cols, rows))
-                    mask = cv2.resize(mask, (cols, rows), cv2.INTER_NEAREST)
                 if save_to_ram is True:
                     cache[id] = (img, mask)
 
@@ -202,10 +192,11 @@ if __name__ == '__main__':
                                  save_best_only=True,
                                  save_weights_only=False),
                  ReduceLROnPlateau(monitor='val_loss', 
-                                   factor=0.5,
-                                   patience=5,
+                                   factor=0.2,
+                                   patience=3,
                                    verbose=1,
-                                   epsilon=1e-5),
+                                   epsilon=1e-4,
+                                   mode='max'),
                  TensorBoard(log_dir='logs')]
 
     model.fit_generator(generator=train_generator(False),
