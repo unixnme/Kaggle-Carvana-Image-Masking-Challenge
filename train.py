@@ -199,7 +199,7 @@ if __name__ == '__main__':
                                    patience=5,
                                    verbose=1,
                                    epsilon=1e-4,
-                                   mode='max'),
+                                   mode='min'),
                  TensorBoard(log_dir='logs')]
 
     model.fit_generator(generator=train_generator(False),
