@@ -3,7 +3,7 @@ import keras
 import numpy as np
 import pandas as pd
 from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler, ReduceLROnPlateau
-from keras.optimizers import SGD, RMSprop
+from keras.optimizers import SGD, RMSprop, Adam
 from sklearn.model_selection import train_test_split
 import os
 import params
@@ -21,7 +21,7 @@ crop_size = 256
 model = params.model_factory(input_shape=(None, None, 3),
         num_classes=1,
         optimizer=
-        SGD(lr=learning_rate, momentum=0.95, nesterov=True),
+        Adam(lr=learning_rate),
         activation=relu,
         regularizer=keras.regularizers.l2(1e-4))
 
