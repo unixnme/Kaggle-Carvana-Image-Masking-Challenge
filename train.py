@@ -9,7 +9,7 @@ import os
 import params
 from model.u_net import leaky, relu
 
-filepath= 'weights/lyakaap.hdf5'
+filepath= 'weights/lyakaap_BN.hdf5'
 epochs = params.max_epochs
 batch_size = params.batch_size
 learning_rate = 2e-4
