@@ -10,8 +10,10 @@ import params
 from model.u_net import leaky, relu
 from model.low_res import create_model
 from model.losses import bce_dice_loss, dice_coeff
+import matplotlib.pyplot as plt
 
-filepath = 'weights/exp_model.h5'
+name = 'run1'
+filepath = 'weights/' + name + '_model.h5'
 epochs = 1000
 batch_size = 10
 rows, cols = 256, 256
@@ -23,15 +25,20 @@ model = create_model(shape=(rows, cols, 3),
                      filter=4,
                      dilation=1,
                      regularizer=None,
-                     activation=relu,
+                     activation=leaky,
                      BN=False,
                      pooling='max')
+#model.load_weights(filepath, by_name=True)
 model.compile(optimizer=RMSprop(learning_rate), loss=bce_dice_loss, metrics=[dice_coeff])
 
 df_train = pd.read_csv('input/train_masks.csv')
 ids_train = df_train['img'].map(lambda s: s.split('.')[0])
 
 ids_train_split, ids_valid_split = train_test_split(ids_train, test_size=0.2, random_state=42)
+
+steps_per_epoch=np.ceil(float(len(ids_train_split)) / float(batch_size))
+validation_steps=np.ceil(float(len(ids_valid_split)) / float(batch_size))
+#steps_per_epoch, validation_steps = 10, 10
 
 print('Training on {} samples'.format(len(ids_train_split)))
 print('Validating on {} samples'.format(len(ids_valid_split)))
@@ -95,7 +102,7 @@ def randomShiftScaleRotate(image, mask,
         image = cv2.warpPerspective(image, mat, (width, height), borderMode=borderMode,
                                     borderValue=(
                                         0, 0,
-                                        0,))
+                                        0,), flags=cv2.INTER_NEAREST)
         mask = cv2.warpPerspective(mask, mat, (width, height), flags=cv2.INTER_NEAREST, borderMode=borderMode,
                                    borderValue=(
                                        0, 0,
@@ -137,7 +144,7 @@ def train_generator(save_to_ram=False):
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                     mask = cv2.imread('input/train_masks/{}_mask.png'.format(id))
-                    img = cv2.resize(img, (cols, rows), interpolation=cv2.INTER_CUBIC)
+                    img = cv2.resize(img, (cols, rows), interpolation=cv2.INTER_NEAREST)
                     mask = cv2.resize(mask, (cols, rows), interpolation=cv2.INTER_NEAREST)
                     # mask color to gray
                     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
@@ -175,7 +182,7 @@ def valid_generator(save_to_ram=False):
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                     mask = cv2.imread('input/train_masks/{}_mask.png'.format(id))
-                    img = cv2.resize(img, (cols, rows), interpolation=cv2.INTER_CUBIC)
+                    img = cv2.resize(img, (cols, rows), interpolation=cv2.INTER_NEAREST)
                     mask = cv2.resize(mask, (cols, rows), interpolation=cv2.INTER_NEAREST)
                     # mask color to gray
                     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
@@ -197,18 +204,45 @@ if __name__ == '__main__':
                                  save_best_only=True,
                                  save_weights_only=False),
                  ReduceLROnPlateau(monitor='val_loss', 
-                                   factor=0.5,
+                                   factor=0.2,
                                    patience=3,
                                    verbose=1,
                                    epsilon=1e-4,
                                    mode='min',
-                                   min_lr=1e-6),
+                                   min_lr=1e-5),
                  TensorBoard(log_dir='logs')]
 
-    model.fit_generator(generator=train_generator(True),
-                        steps_per_epoch=np.ceil(float(len(ids_train_split)) / float(batch_size)),
+    history = model.fit_generator(generator=train_generator(True),
+                        steps_per_epoch=steps_per_epoch,
                         epochs=epochs,
                         verbose=1,
                         callbacks=callbacks,
                         validation_data=valid_generator(True),
-                        validation_steps=np.ceil(float(len(ids_valid_split)) / float(batch_size)))
+                        validation_steps=validation_steps)
+
+    print(history.history.keys())
+    #  "Accuracy"
+    fig = plt.figure()
+    plt.plot(history.history['dice_coeff'])
+    plt.plot(history.history['val_dice_coeff'])
+    plt.title('model accuracy')
+    plt.ylabel('dice coefficient')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    fig.savefig(name + '_acc.png')
+    # "Loss"
+    fig = plt.figure()
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    fig.savefig(name + '_loss.png')
+    # "LearningRate"
+    fig = plt.figure()
+    plt.plot(history.history['lr'])
+    plt.title('learning rate')
+    plt.ylabel('learning rate')
+    plt.xlabel('epoch')
+    fig.savefig(name + '_lr.png')
