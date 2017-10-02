@@ -13,7 +13,7 @@ from model.losses import bce_dice_loss, dice_coeff
 import matplotlib.pyplot as plt
 import pickle
 
-name = 'run1'
+name = 'run7'
 filepath = 'weights/' + name + '_model.h5'
 epochs = 1000
 batch_size = 10
@@ -165,7 +165,7 @@ def train_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255 - 0.5
+            x_batch = np.array(x_batch, np.float32) / 255
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -193,7 +193,7 @@ def valid_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255 - .5
+            x_batch = np.array(x_batch, np.float32) / 255
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
