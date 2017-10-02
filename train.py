@@ -6,43 +6,13 @@ from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler,
 from keras.optimizers import SGD, RMSprop, Adam
 from sklearn.model_selection import train_test_split
 import os
+import sys
 import params
-from model.u_net import leaky, relu
+from model.u_net import leaky, relu, prelu
 from model.low_res import create_model
 from model.losses import bce_dice_loss, dice_coeff
 import matplotlib.pyplot as plt
 import pickle
-
-name = 'run13'
-filepath = 'weights/' + name + '_model.h5'
-epochs = 1000
-batch_size = 10
-rows, cols = 256, 256
-learning_rate = 1e-3
-
-model = create_model(shape=(rows, cols, 3),
-                     num_blocks=3,
-                     kernel=3,
-                     filter=4,
-                     dilation=1,
-                     regularizer=None,
-                     activation=leaky,
-                     BN=False,
-                     pooling='max')
-#model.load_weights(filepath, by_name=True)
-model.compile(optimizer=RMSprop(learning_rate), loss=bce_dice_loss, metrics=[dice_coeff])
-
-df_train = pd.read_csv('input/train_masks.csv')
-ids_train = df_train['img'].map(lambda s: s.split('.')[0])
-
-ids_train_split, ids_valid_split = train_test_split(ids_train, test_size=0.2, random_state=42)
-
-steps_per_epoch=np.ceil(float(len(ids_train_split)) / float(batch_size))
-validation_steps=np.ceil(float(len(ids_valid_split)) / float(batch_size))
-#steps_per_epoch, validation_steps = 10, 10
-
-print('Training on {} samples'.format(len(ids_train_split)))
-print('Validating on {} samples'.format(len(ids_valid_split)))
 
 def step_decay(epoch):
     lr = learning_rate * np.power(0.5, epoch/float(half_life))
@@ -199,57 +169,97 @@ def valid_generator(save_to_ram=False):
 
 
 if __name__ == '__main__':
-    callbacks = [ModelCheckpoint(monitor='val_loss',
-                                 filepath=filepath,
-                                 verbose=True,
-                                 save_best_only=True,
-                                 save_weights_only=False),
-                 ReduceLROnPlateau(monitor='val_loss', 
-                                   factor=0.2,
-                                   patience=3,
-                                   verbose=1,
-                                   epsilon=1e-4,
-                                   mode='min',
-                                   min_lr=1e-5),
-                 EarlyStopping(monitor='val_loss', 
-                                   patience=5, 
-                                   verbose=1, 
-                                   mode='min', 
-                                   min_delta=1e-5)]
 
-    history = model.fit_generator(generator=train_generator(True),
-                        steps_per_epoch=steps_per_epoch,
-                        epochs=epochs,
-                        verbose=1,
-                        callbacks=callbacks,
-                        validation_data=valid_generator(True),
-                        validation_steps=validation_steps)
-    with open(name + '_history.p', 'wb') as f:
-        pickle.dump(history.history, f)
+    epochs = 1000
+    batch_size = 10
+    rows, cols = 256, 256
+    learning_rate = 1e-3
 
-    print(history.history.keys())
-    #  "Accuracy"
-    fig = plt.figure()
-    plt.semilogy(history.history['dice_coeff'])
-    plt.semilogy(history.history['val_dice_coeff'])
-    plt.title('model accuracy')
-    plt.ylabel('dice coefficient')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
-    fig.savefig(name + '_acc.png')
-    # "Loss"
-    fig = plt.figure()
-    plt.semilogy(history.history['loss'])
-    plt.semilogy(history.history['val_loss'])
-    plt.title('model loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
-    fig.savefig(name + '_loss.png')
-    # "LearningRate"
-    fig = plt.figure()
-    plt.plot(history.history['lr'])
-    plt.title('learning rate')
-    plt.ylabel('learning rate')
-    plt.xlabel('epoch')
-    fig.savefig(name + '_lr.png')
+    df_train = pd.read_csv('input/train_masks.csv')
+    ids_train = df_train['img'].map(lambda s: s.split('.')[0])
+
+    ids_train_split, ids_valid_split = train_test_split(ids_train, test_size=0.2, random_state=42)
+
+    steps_per_epoch = np.ceil(float(len(ids_train_split)) / float(batch_size))
+    validation_steps = np.ceil(float(len(ids_valid_split)) / float(batch_size))
+    # steps_per_epoch, validation_steps = 10, 10
+
+    print('Training on {} samples'.format(len(ids_train_split)))
+    print('Validating on {} samples'.format(len(ids_valid_split)))
+
+    offset = 13
+    activations = [leaky, prelu, prelu, leaky, relu, relu]
+    BNs =         [False, False, True, True, False, True]
+
+    for idx in range(6):
+        name = 'run' + str(idx + offset)
+        with open('nohup.out.' + name, 'w') as f:
+            sys.stdout = f
+            filepath = 'weights/' + name + '_model.h5'
+
+            model = create_model(shape=(rows, cols, 3),
+                                 num_blocks=3,
+                                 kernel=3,
+                                 filter=4,
+                                 dilation=1,
+                                 regularizer=None,
+                                 activation=activations[idx],
+                                 BN=BNs[idx],
+                                 pooling='max')
+            # model.load_weights(filepath, by_name=True)
+            model.compile(optimizer=RMSprop(learning_rate), loss=bce_dice_loss, metrics=[dice_coeff])
+
+            callbacks = [ModelCheckpoint(monitor='val_loss',
+                                         filepath=filepath,
+                                         verbose=True,
+                                         save_best_only=True,
+                                         save_weights_only=False),
+                         ReduceLROnPlateau(monitor='val_loss',
+                                           factor=0.2,
+                                           patience=3,
+                                           verbose=1,
+                                           epsilon=1e-4,
+                                           mode='min',
+                                           min_lr=1e-5),
+                         EarlyStopping(monitor='val_loss',
+                                           patience=5,
+                                           verbose=1,
+                                           mode='min',
+                                           min_delta=1e-5)]
+
+            history = model.fit_generator(generator=train_generator(True),
+                                steps_per_epoch=steps_per_epoch,
+                                epochs=epochs,
+                                verbose=1,
+                                callbacks=callbacks,
+                                validation_data=valid_generator(True),
+                                validation_steps=validation_steps)
+            with open(name + '_history.p', 'wb') as f:
+                pickle.dump(history.history, f)
+
+            print(history.history.keys())
+            #  "Accuracy"
+            fig = plt.figure()
+            plt.semilogy(history.history['dice_coeff'])
+            plt.semilogy(history.history['val_dice_coeff'])
+            plt.title('model accuracy')
+            plt.ylabel('dice coefficient')
+            plt.xlabel('epoch')
+            plt.legend(['train', 'validation'], loc='upper left')
+            fig.savefig(name + '_acc.png')
+            # "Loss"
+            fig = plt.figure()
+            plt.semilogy(history.history['loss'])
+            plt.semilogy(history.history['val_loss'])
+            plt.title('model loss')
+            plt.ylabel('loss')
+            plt.xlabel('epoch')
+            plt.legend(['train', 'validation'], loc='upper left')
+            fig.savefig(name + '_loss.png')
+            # "LearningRate"
+            fig = plt.figure()
+            plt.plot(history.history['lr'])
+            plt.title('learning rate')
+            plt.ylabel('learning rate')
+            plt.xlabel('epoch')
+            fig.savefig(name + '_lr.png')
