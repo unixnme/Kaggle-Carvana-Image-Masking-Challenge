@@ -170,7 +170,7 @@ def valid_generator(save_to_ram=False):
             end = min(start + batch_size, len(ids_valid_split))
             ids_valid_batch = ids_valid_split[start:end]
             for id in ids_valid_batch.values:
-                if save_to_ram is True and cache.has_hey(id):
+                if save_to_ram is True and cache.has_key(id):
                     img, mask = cache[id]
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
