@@ -263,3 +263,5 @@ if __name__ == '__main__':
             plt.ylabel('learning rate')
             plt.xlabel('epoch')
             fig.savefig(name + '_lr.png')
+
+            del model
