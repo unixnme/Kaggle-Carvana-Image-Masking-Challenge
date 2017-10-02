@@ -11,6 +11,7 @@ from model.u_net import leaky, relu, prelu
 from model.low_res import create_model
 from model.losses import bce_dice_loss, dice_coeff
 import matplotlib.pyplot as plt
+import pickle
 
 name = 'run3'
 filepath = 'weights/' + name + '_model.h5'
@@ -223,12 +224,14 @@ if __name__ == '__main__':
                         callbacks=callbacks,
                         validation_data=valid_generator(True),
                         validation_steps=validation_steps)
+    with open(name + '_history.p', 'wb') as f:
+        pickle.dump(history.history, f)
 
     print(history.history.keys())
     #  "Accuracy"
     fig = plt.figure()
-    plt.plot(history.history['dice_coeff'])
-    plt.plot(history.history['val_dice_coeff'])
+    plt.semilogy(history.history['dice_coeff'])
+    plt.semilogy(history.history['val_dice_coeff'])
     plt.title('model accuracy')
     plt.ylabel('dice coefficient')
     plt.xlabel('epoch')
@@ -236,8 +239,8 @@ if __name__ == '__main__':
     fig.savefig(name + '_acc.png')
     # "Loss"
     fig = plt.figure()
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
+    plt.semilogy(history.history['loss'])
+    plt.semilogy(history.history['val_loss'])
     plt.title('model loss')
     plt.ylabel('loss')
     plt.xlabel('epoch')
