@@ -12,7 +12,7 @@ from model.low_res import create_model
 from model.losses import bce_dice_loss, dice_coeff
 import matplotlib.pyplot as plt
 
-name = 'run1'
+name = 'run4'
 filepath = 'weights/' + name + '_model.h5'
 epochs = 1000
 batch_size = 10
@@ -26,7 +26,7 @@ model = create_model(shape=(rows, cols, 3),
                      dilation=1,
                      regularizer=None,
                      activation=leaky,
-                     BN=False,
+                     BN=True,
                      pooling='max')
 #model.load_weights(filepath, by_name=True)
 model.compile(optimizer=RMSprop(learning_rate), loss=bce_dice_loss, metrics=[dice_coeff])
