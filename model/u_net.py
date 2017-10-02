@@ -12,6 +12,9 @@ def leaky():
 def relu():
     return Activation('relu')
 
+def prelu():
+    return keras.layers.advanced_activations.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=None)
+
 def get_unet_128(optimizer, input_shape=(128, 128, 3),
                  num_classes=1, regularizer=None, activation=leaky):
     inputs = Input(shape=input_shape)
