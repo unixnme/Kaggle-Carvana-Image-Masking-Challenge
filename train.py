@@ -15,7 +15,7 @@ epochs = params.max_epochs
 batch_size = params.batch_size
 learning_rate = 2e-4
 model = params.model_factory(input_shape=(None, None, 3),
-                             init_nb=16, regularizer=l2(1e-4))
+                             init_nb=16, regularizer=l2(1e-5))
 
 if os.path.isfile(filepath):
     print 'loading', filepath
