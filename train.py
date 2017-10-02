@@ -7,12 +7,12 @@ from keras.optimizers import SGD, RMSprop, Adam
 from sklearn.model_selection import train_test_split
 import os
 import params
-from model.u_net import leaky, relu
+from model.u_net import leaky, relu, prelu
 from model.low_res import create_model
 from model.losses import bce_dice_loss, dice_coeff
 import matplotlib.pyplot as plt
 
-name = 'run1'
+name = 'run2'
 filepath = 'weights/' + name + '_model.h5'
 epochs = 1000
 batch_size = 10
@@ -25,7 +25,7 @@ model = create_model(shape=(rows, cols, 3),
                      filter=4,
                      dilation=1,
                      regularizer=None,
-                     activation=leaky,
+                     activation=prelu,
                      BN=False,
                      pooling='max')
 #model.load_weights(filepath, by_name=True)
