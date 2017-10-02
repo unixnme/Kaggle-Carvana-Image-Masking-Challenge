@@ -2,7 +2,7 @@ import cv2
 import keras
 import numpy as np
 import pandas as pd
-from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler, ReduceLROnPlateau
+from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler, ReduceLROnPlateau, EarlyStopping
 from keras.optimizers import SGD, RMSprop, Adam
 from sklearn.model_selection import train_test_split
 import os
@@ -210,7 +210,11 @@ if __name__ == '__main__':
                                    epsilon=1e-4,
                                    mode='min',
                                    min_lr=1e-5),
-                 TensorBoard(log_dir='logs')]
+                 EarlyStopping(monitor='val_loss', 
+                                   patience=5, 
+                                   verbose=1, 
+                                   mode='min', 
+                                   min_delta=1e-5)]
 
     history = model.fit_generator(generator=train_generator(True),
                         steps_per_epoch=steps_per_epoch,
