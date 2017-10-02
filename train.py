@@ -13,7 +13,7 @@ from model.losses import bce_dice_loss, dice_coeff
 import matplotlib.pyplot as plt
 import pickle
 
-name = 'run6'
+name = 'run24'
 filepath = 'weights/' + name + '_model.h5'
 epochs = 1000
 batch_size = 10
@@ -205,7 +205,7 @@ if __name__ == '__main__':
                                  save_best_only=True,
                                  save_weights_only=False),
                  ReduceLROnPlateau(monitor='val_loss', 
-                                   factor=0.2,
+                                   factor=0.5,
                                    patience=3,
                                    verbose=1,
                                    epsilon=1e-4,
