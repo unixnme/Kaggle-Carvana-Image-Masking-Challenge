@@ -13,7 +13,7 @@ from model.losses import bce_dice_loss, dice_coeff
 import matplotlib.pyplot as plt
 import pickle
 
-name = 'run1'
+name = 'run5'
 filepath = 'weights/' + name + '_model.h5'
 epochs = 1000
 batch_size = 10
@@ -26,7 +26,7 @@ model = create_model(shape=(rows, cols, 3),
                      filter=4,
                      dilation=1,
                      regularizer=None,
-                     activation=leaky,
+                     activation=relu,
                      BN=False,
                      pooling='max')
 #model.load_weights(filepath, by_name=True)
