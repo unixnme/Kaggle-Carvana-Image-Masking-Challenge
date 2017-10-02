@@ -8,17 +8,25 @@ from sklearn.model_selection import train_test_split
 import os
 import params
 from model.u_net import leaky, relu
+from model.low_res import create_model
+from model.losses import bce_dice_loss, dice_coeff
 
-filepath= 'weights/lyakaap.hdf5'
-epochs = params.max_epochs
-batch_size = params.batch_size
-learning_rate = 2e-4
-model = params.model_factory(input_shape=(None, None, 3),
-                             init_nb=16)
+filepath = 'weights/exp_model.h5'
+epochs = 1000
+batch_size = 10
+rows, cols = 256, 256
+learning_rate = 1e-3
 
-if os.path.isfile(filepath):
-    print 'loading', filepath
-    model.load_weights(filepath, by_name=True)
+model = create_model(shape=(rows, cols, 3),
+                     num_blocks=3,
+                     kernel=3,
+                     filter=4,
+                     dilation=1,
+                     regularizer=None,
+                     activation=relu,
+                     BN=False,
+                     pooling='max')
+model.compile(optimizer=RMSprop(learning_rate), loss=bce_dice_loss, metrics=[dice_coeff])
 
 df_train = pd.read_csv('input/train_masks.csv')
 ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -119,8 +127,6 @@ def train_generator(save_to_ram=False):
     while True:
         np.random.shuffle(indices)
         for start in range(0, len(ids_train_split), batch_size):
-            crop_size_y = np.random.randint(4, 11) * 64
-            crop_size_x = np.random.randint(4, 16) * 64
             x_batch = []
             y_batch = []
             end = min(start + batch_size, len(ids_train_split))
@@ -131,10 +137,8 @@ def train_generator(save_to_ram=False):
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                     mask = cv2.imread('input/train_masks/{}_mask.png'.format(id))
-                    # zero pad
-                    pad = np.zeros(shape=(1280, 2, 3), dtype=np.uint8)
-                    img = np.concatenate((img, pad), axis=1)
-                    mask = np.concatenate((mask, pad), axis=1)
+                    img = cv2.resize(img, (cols, rows), interpolation=cv2.INTER_CUBIC)
+                    mask = cv2.resize(mask, (cols, rows), interpolation=cv2.INTER_NEAREST)
                     # mask color to gray
                     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                 if save_to_ram is True:
@@ -153,7 +157,7 @@ def train_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255
+            x_batch = np.array(x_batch, np.float32) / 255 - 0.5
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -171,10 +175,8 @@ def valid_generator(save_to_ram=False):
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                     mask = cv2.imread('input/train_masks/{}_mask.png'.format(id))
-                    # zero pad
-                    pad = np.zeros(shape=(1280, 2, 3), dtype=np.uint8)
-                    img = np.concatenate((img, pad), axis=1)
-                    mask = np.concatenate((mask, pad), axis=1)
+                    img = cv2.resize(img, (cols, rows), interpolation=cv2.INTER_CUBIC)
+                    mask = cv2.resize(mask, (cols, rows), interpolation=cv2.INTER_NEAREST)
                     # mask color to gray
                     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                 if save_to_ram is True:
@@ -183,7 +185,7 @@ def valid_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255
+            x_batch = np.array(x_batch, np.float32) / 255 - .5
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -196,16 +198,17 @@ if __name__ == '__main__':
                                  save_weights_only=False),
                  ReduceLROnPlateau(monitor='val_loss', 
                                    factor=0.5,
-                                   patience=5,
+                                   patience=3,
                                    verbose=1,
                                    epsilon=1e-4,
-                                   mode='max'),
+                                   mode='min',
+                                   min_lr=1e-6),
                  TensorBoard(log_dir='logs')]
 
-    model.fit_generator(generator=train_generator(False),
+    model.fit_generator(generator=train_generator(True),
                         steps_per_epoch=np.ceil(float(len(ids_train_split)) / float(batch_size)),
                         epochs=epochs,
                         verbose=1,
                         callbacks=callbacks,
-                        validation_data=valid_generator(False),
+                        validation_data=valid_generator(True),
                         validation_steps=np.ceil(float(len(ids_valid_split)) / float(batch_size)))
