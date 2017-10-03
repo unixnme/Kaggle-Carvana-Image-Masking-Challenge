@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 import os
 import sys
 import params
-from model.u_net import leaky, relu, prelu
+from model.u_net import leaky, relu, prelu, elu
 from model.low_res import create_model
 from model.losses import bce_dice_loss, dice_coeff
 import matplotlib
@@ -192,8 +192,8 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    activations = [relu, relu, leaky, leaky, prelu, prelu]
-    BNs =         [False, True, False, True, False, True]
+    activations = [relu, relu, elu, elu, leaky, leaky, prelu, prelu]
+    BNs =         [False, True, False, True, False, True, False, True]
 
     for idx in range(6):
         name = 'exp' + str(idx + offset)

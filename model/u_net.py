@@ -12,6 +12,9 @@ def leaky():
 def relu():
     return Activation('relu')
 
+def elu():
+    return Activation('elu')
+
 def prelu():
     return keras.layers.advanced_activations.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=None)
 
