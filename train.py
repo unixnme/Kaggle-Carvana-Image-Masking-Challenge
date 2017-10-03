@@ -11,6 +11,8 @@ import params
 from model.u_net import leaky, relu, prelu
 from model.low_res import create_model
 from model.losses import bce_dice_loss, dice_coeff
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pickle
 
