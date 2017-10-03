@@ -195,7 +195,7 @@ if __name__ == '__main__':
     activations = [relu, relu, elu, elu, leaky, leaky, prelu, prelu]
     BNs =         [False, True, False, True, False, True, False, True]
 
-    for idx in range(6):
+    for idx in range(len(BNs)):
         name = 'exp' + str(idx + offset)
         with open('nohup.out.' + name, 'w') as f:
             sys.stdout = f
