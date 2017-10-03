@@ -11,8 +11,10 @@ def leaky(alpha=0.1):
         return keras.layers.advanced_activations.LeakyReLU(alpha)
     return activation
 
-def relu():
-    return Activation('relu')
+def relu(alpha=1.):
+    def activation():
+        return Lambda(lambda x: K.maximum(alpha*x, 0))
+    return activation
 
 def elu():
     return Activation('elu')
