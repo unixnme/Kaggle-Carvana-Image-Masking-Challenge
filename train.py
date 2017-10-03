@@ -137,7 +137,7 @@ def train_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255 - 1
+            x_batch = np.array(x_batch, np.float32) / 255
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -165,7 +165,7 @@ def valid_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255 - 1
+            x_batch = np.array(x_batch, np.float32) / 255
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
