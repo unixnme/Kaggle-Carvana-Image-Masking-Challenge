@@ -217,7 +217,7 @@ if __name__ == '__main__':
                                          save_best_only=True,
                                          save_weights_only=False),
                          ReduceLROnPlateau(monitor='val_loss',
-                                           factor=0.2,
+                                           factor=0.5,
                                            patience=3,
                                            verbose=1,
                                            epsilon=1e-4,
