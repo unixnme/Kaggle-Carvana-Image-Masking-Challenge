@@ -178,7 +178,7 @@ if __name__ == '__main__':
     learning_rate = 1e-3
     input_mean = 0.
     decay = 0.5
-    offset = 1
+    offset = 41
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -192,10 +192,9 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    activations = [relu, relu, elu, elu, leaky, leaky, prelu, prelu]
-    BNs =         [False, True, False, True, False, True, False, True]
+    alpha = [-1., -.5, -.1, .3, .5, 2.]
 
-    for idx in range(len(BNs)):
+    for idx in range(len(alpha)):
         name = 'exp' + str(idx + offset)
         with open('nohup.out.' + name, 'w') as f:
             sys.stdout = f
@@ -207,8 +206,8 @@ if __name__ == '__main__':
                                  filter=4,
                                  dilation=1,
                                  regularizer=None,
-                                 activation=activations[idx],
-                                 BN=BNs[idx],
+                                 activation=leaky(alpha[idx]),
+                                 BN=False,
                                  pooling='max')
             # model.load_weights(filepath, by_name=True)
             model.compile(optimizer=RMSprop(learning_rate), loss=bce_dice_loss, metrics=[dice_coeff])
