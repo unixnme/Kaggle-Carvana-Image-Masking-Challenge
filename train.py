@@ -176,7 +176,7 @@ if __name__ == '__main__':
     batch_size = 10
     rows, cols = 256, 256
     learning_rate = 1e-3
-    input_mean = 0.
+    input_mean = .5
     decay = 0.5
     offset = 1
 
