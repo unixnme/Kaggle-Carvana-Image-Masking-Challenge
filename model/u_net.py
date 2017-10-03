@@ -13,7 +13,12 @@ def leaky(alpha=0.1):
 
 def relu(alpha=1.):
     def activation():
-        return Lambda(lambda x: K.maximum(alpha*x, 0))
+        return Lambda(lambda x: K.maximum(alpha*x, 0.))
+    return activation
+
+def custom(alpha=0.5, beta=2.0):
+    def activation():
+        return Lambda(lambda x: K.minimum(x, 0.)*alpha + K.maximum(x, 0.)*beta)
     return activation
 
 def elu():

@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 import os
 import sys
 import params
-from model.u_net import leaky, relu, prelu, elu
+from model.u_net import leaky, relu, prelu, elu, custom
 from model.low_res import create_model
 from model.losses import bce_dice_loss, dice_coeff
 import matplotlib
@@ -175,10 +175,10 @@ if __name__ == '__main__':
     epochs = 1000
     batch_size = 10
     rows, cols = 256, 256
-    learning_rate = 1e-3
+    learning_rate = 2e-4
     input_mean = 0.
     decay = 0.5
-    offset = 51
+    offset = 61
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -192,7 +192,9 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    alpha = [.5, 2., -2., -.5]
+    alpha = [0.5, 0.5, 0.2, 0.2, -1.0, 1.0]
+    beta = [2.0, 2.0, 5.0, 5.0, -1.0, 1.0]
+    BNs = [False, True, False, True, False, True]
 
     for idx in range(len(alpha)):
         name = 'exp' + str(idx + offset)
@@ -206,8 +208,8 @@ if __name__ == '__main__':
                                  filter=4,
                                  dilation=1,
                                  regularizer=None,
-                                 activation=relu(alpha[idx]),
-                                 BN=False,
+                                 activation=custom(alpha[idx], beta[idx]),
+                                 BN=BNs[idx],
                                  pooling='max')
             # model.load_weights(filepath, by_name=True)
             model.compile(optimizer=RMSprop(learning_rate), loss=bce_dice_loss, metrics=[dice_coeff])
@@ -223,7 +225,7 @@ if __name__ == '__main__':
                                            verbose=1,
                                            epsilon=1e-4,
                                            mode='min',
-                                           min_lr=1e-5),
+                                           min_lr=2e-6),
                          EarlyStopping(monitor='val_loss',
                                            patience=5,
                                            verbose=1,
