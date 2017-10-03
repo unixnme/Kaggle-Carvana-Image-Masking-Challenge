@@ -137,7 +137,7 @@ def train_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255 - 1
+            x_batch = np.array(x_batch, np.float32) / 255 - 0.5 + input_mean
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -165,7 +165,7 @@ def valid_generator(save_to_ram=False):
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
                 y_batch.append(mask)
-            x_batch = np.array(x_batch, np.float32) / 255 - 1
+            x_batch = np.array(x_batch, np.float32) / 255 - 0.5 + input_mean
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
@@ -176,6 +176,9 @@ if __name__ == '__main__':
     batch_size = 10
     rows, cols = 256, 256
     learning_rate = 1e-3
+    input_mean = 0.
+    decay = 0.5
+    offset = 1
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -189,12 +192,11 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    offset = 13
-    activations = [leaky, prelu, prelu, leaky, relu, relu]
-    BNs =         [False, False, True, True, False, True]
+    activations = [relu, relu, leaky, leaky, prelu, prelu]
+    BNs =         [False, True, False, True, False, True]
 
     for idx in range(6):
-        name = 'run' + str(idx + offset)
+        name = 'exp' + str(idx + offset)
         with open('nohup.out.' + name, 'w') as f:
             sys.stdout = f
             filepath = 'weights/' + name + '_model.h5'
@@ -217,7 +219,7 @@ if __name__ == '__main__':
                                          save_best_only=True,
                                          save_weights_only=False),
                          ReduceLROnPlateau(monitor='val_loss',
-                                           factor=0.5,
+                                           factor=decay,
                                            patience=3,
                                            verbose=1,
                                            epsilon=1e-4,
