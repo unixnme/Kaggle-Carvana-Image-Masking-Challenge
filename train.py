@@ -178,7 +178,7 @@ if __name__ == '__main__':
     learning_rate = 1e-3
     input_mean = 0.
     decay = 0.5
-    offset = 1
+    offset = 181
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -209,7 +209,8 @@ if __name__ == '__main__':
                                  regularizer=None,
                                  activation=activations[idx],
                                  BN=BNs[idx],
-                                 pooling='max')
+                                 pooling='max',
+                                 initializer='he_normal')
             # model.load_weights(filepath, by_name=True)
             model.compile(optimizer=RMSprop(learning_rate), loss=bce_dice_loss, metrics=[dice_coeff])
 
