@@ -175,10 +175,10 @@ if __name__ == '__main__':
     epochs = 1000
     batch_size = 10
     rows, cols = 256, 256
-    learning_rate = 1e-3
+    learning_rate = 1e-2
     input_mean = 0.
     decay = 0.5
-    offset = 181
+    offset = 191
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -212,7 +212,7 @@ if __name__ == '__main__':
                                  pooling='max',
                                  initializer='he_normal')
             # model.load_weights(filepath, by_name=True)
-            model.compile(optimizer=RMSprop(learning_rate), loss=bce_dice_loss, metrics=[dice_coeff])
+            model.compile(optimizer=SGD(learning_rate, momentum=0.95, nesterov=True), loss=bce_dice_loss, metrics=[dice_coeff])
 
             callbacks = [ModelCheckpoint(monitor='val_loss',
                                          filepath=filepath,
@@ -221,13 +221,13 @@ if __name__ == '__main__':
                                          save_weights_only=False),
                          ReduceLROnPlateau(monitor='val_loss',
                                            factor=decay,
-                                           patience=3,
+                                           patience=6,
                                            verbose=1,
                                            epsilon=1e-4,
                                            mode='min',
                                            min_lr=1e-5),
                          EarlyStopping(monitor='val_loss',
-                                           patience=5,
+                                           patience=10,
                                            verbose=1,
                                            mode='min',
                                            min_delta=1e-5)]
