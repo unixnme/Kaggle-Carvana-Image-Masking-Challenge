@@ -3,7 +3,7 @@ import keras
 import numpy as np
 import pandas as pd
 from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler, ReduceLROnPlateau, EarlyStopping
-from keras.optimizers import SGD, RMSprop, Adam
+from keras.optimizers import SGD, RMSprop, Adam, Adadelta
 from sklearn.model_selection import train_test_split
 import os
 import sys
@@ -178,7 +178,7 @@ if __name__ == '__main__':
     learning_rate = 1e-2
     input_mean = 0.
     decay = 0.5
-    offset = 111
+    offset = 131
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -211,7 +211,7 @@ if __name__ == '__main__':
                                  BN=BNs[idx],
                                  pooling='max')
             # model.load_weights(filepath, by_name=True)
-            model.compile(optimizer=SGD(learning_rate, momentum=0.90, nesterov=True), loss=bce_dice_loss, metrics=[dice_coeff])
+            model.compile(optimizer=Adadelta(learning_rate), loss=bce_dice_loss, metrics=[dice_coeff])
 
             callbacks = [ModelCheckpoint(monitor='val_loss',
                                          filepath=filepath,
