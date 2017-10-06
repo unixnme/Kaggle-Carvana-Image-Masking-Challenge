@@ -12,6 +12,12 @@ def tanh():
 def xigmoid():
     return Lambda(lambda x: K.sigmoid(x) + x)
 
+def relu2():
+    return Lambda(lambda x: K.relu(x) - .5)
+
+def leaky2():
+    return Lambda(lambda x: K.relu(x, alpha=0.1) - .5)
+
 def leaky():
     return keras.layers.advanced_activations.LeakyReLU(alpha=0.1)
 

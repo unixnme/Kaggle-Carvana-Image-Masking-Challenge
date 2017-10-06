@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 import os
 import sys
 import params
-from model.u_net import leaky, relu, prelu, elu, xigmoid, tanh
+from model.u_net import leaky, relu, prelu, elu, xigmoid, tanh, relu2, leaky2
 from model.low_res import create_model
 from model.losses import bce_dice_loss, dice_coeff
 import matplotlib
@@ -176,10 +176,10 @@ if __name__ == '__main__':
     epochs = 1000
     batch_size = 10
     rows, cols = 256, 256
-    learning_rate = 1e-2
+    learning_rate = 1e-3
     input_mean = 0.
     decay = 0.5
-    offset = 241
+    offset = 261
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -193,9 +193,8 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    lrs = [1e-3, 1e-3, 2e-3, 2e-3]
+    activations = [relu2, relu2, leaky2, leaky2]
     BNs = [False, True, False, True]
-    optimizers = [RMSprop, RMSprop, Nadam, Nadam]
 
     for idx in range(len(BNs)):
         name = 'exp' + str(idx + offset)
@@ -209,12 +208,12 @@ if __name__ == '__main__':
                                  filter=4,
                                  dilation=1,
                                  regularizer=None,
-                                 activation=tanh,
+                                 activation=activations[idx],
                                  BN=BNs[idx],
                                  pooling='max',
                                  initializer='he_normal')
             # model.load_weights(filepath, by_name=True)
-            model.compile(optimizer=optimizers[idx](lrs[idx], clipnorm=1.), loss=bce_dice_loss, metrics=[dice_coeff])
+            model.compile(optimizer=RMSprop(learning_rate, clipnorm=1.), loss=bce_dice_loss, metrics=[dice_coeff])
 
             callbacks = [ModelCheckpoint(monitor='val_loss',
                                          filepath=filepath,
