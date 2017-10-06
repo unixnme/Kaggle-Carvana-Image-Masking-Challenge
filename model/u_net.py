@@ -6,6 +6,12 @@ import keras.backend as K
 
 from model.losses import bce_dice_loss, dice_loss, weighted_bce_dice_loss, weighted_dice_loss, dice_coeff, sparse_cce_dice_loss
 
+def tanh():
+    return Lambda(lambda x: K.tanh(x) + 0.1*x)
+
+def xigmoid():
+    return Lambda(lambda x: K.sigmoid(x) + x)
+
 def leaky():
     return keras.layers.advanced_activations.LeakyReLU(alpha=0.1)
 

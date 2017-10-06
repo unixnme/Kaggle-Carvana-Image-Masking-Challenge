@@ -3,12 +3,13 @@ import keras
 import numpy as np
 import pandas as pd
 from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler, ReduceLROnPlateau, EarlyStopping
-from keras.optimizers import SGD, RMSprop, Adam
+from keras.optimizers import SGD, RMSprop, Adam, Nadam
+from keras.regularizers import l2
 from sklearn.model_selection import train_test_split
 import os
 import sys
 import params
-from model.u_net import leaky, relu, prelu, elu
+from model.u_net import leaky, relu, prelu, elu, xigmoid, tanh
 from model.low_res import create_model
 from model.losses import bce_dice_loss, dice_coeff
 import matplotlib
@@ -175,10 +176,10 @@ if __name__ == '__main__':
     epochs = 1000
     batch_size = 10
     rows, cols = 256, 256
-    learning_rate = 1e-3
+    learning_rate = 1e-2
     input_mean = 0.
     decay = 0.5
-    offset = 231
+    offset = 241
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -192,8 +193,9 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    activations = [relu, relu, elu, elu, leaky, leaky, prelu, prelu]
-    BNs =         [False, True, False, True, False, True, False, True]
+    lrs = [1e-3, 1e-3, 2e-3, 2e-3]
+    BNs = [False, True, False, True]
+    optimizers = [RMSprop, RMSprop, Nadam, Nadam]
 
     for idx in range(len(BNs)):
         name = 'exp' + str(idx + offset)
@@ -207,12 +209,12 @@ if __name__ == '__main__':
                                  filter=4,
                                  dilation=1,
                                  regularizer=None,
-                                 activation=activations[idx],
+                                 activation=tanh,
                                  BN=BNs[idx],
                                  pooling='max',
                                  initializer='he_normal')
             # model.load_weights(filepath, by_name=True)
-            model.compile(optimizer=RMSprop(learning_rate, clipnorm=1.), loss=bce_dice_loss, metrics=[dice_coeff])
+            model.compile(optimizer=optimizers[idx](lrs[idx], clipnorm=1.), loss=bce_dice_loss, metrics=[dice_coeff])
 
             callbacks = [ModelCheckpoint(monitor='val_loss',
                                          filepath=filepath,
@@ -221,9 +223,9 @@ if __name__ == '__main__':
                                          save_weights_only=False),
                          ReduceLROnPlateau(monitor='val_loss',
                                            factor=decay,
-                                           patience=6,
+                                           patience=3,
                                            verbose=1,
-                                           epsilon=1e-5,
+                                           epsilon=1e-4,
                                            mode='min',
                                            min_lr=1e-5),
                          EarlyStopping(monitor='val_loss',
