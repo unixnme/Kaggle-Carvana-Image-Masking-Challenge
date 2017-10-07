@@ -132,7 +132,7 @@ def train_generator(save_to_ram=False):
                 img, mask = randomShiftScaleRotate(img, mask,
                                                    shift_limit=(-0.0625, 0.0625),
                                                    scale_limit=(-0.1, 0.1),
-                                                   rotate_limit=(-5, 5),
+                                                   rotate_limit=(-0, 0),
                                                    u=1)
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
@@ -179,7 +179,7 @@ if __name__ == '__main__':
     learning_rate = 1e-3
     input_mean = 0.
     decay = 0.5
-    offset = 271
+    offset = 291
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -193,8 +193,8 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    activations = [relu, relu, elu, elu, leaky, leaky, prelu, prelu]
-    BNs =         [False, True, False, True, False, True, False, True]
+    activations = [relu, relu, elu, elu, leaky, leaky]
+    BNs =         [False, True, False, True, False, True]
 
     for idx in range(len(BNs)):
         name = 'exp' + str(idx + offset)
@@ -207,7 +207,7 @@ if __name__ == '__main__':
                                  kernel=3,
                                  filter=4,
                                  dilation=1,
-                                 regularizer=l2(1e-4),
+                                 regularizer=None,
                                  activation=activations[idx],
                                  BN=BNs[idx],
                                  pooling='max',
