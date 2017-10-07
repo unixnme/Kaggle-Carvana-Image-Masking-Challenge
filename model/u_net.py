@@ -6,8 +6,10 @@ import keras.backend as K
 
 from model.losses import bce_dice_loss, dice_loss, weighted_bce_dice_loss, weighted_dice_loss, dice_coeff, sparse_cce_dice_loss
 
-def leaky():
-    return keras.layers.advanced_activations.LeakyReLU(alpha=0.1)
+def leaky(alpha=0.1):
+    def activation():
+        return keras.layers.advanced_activations.LeakyReLU(alpha)
+    return activation
 
 def relu():
     return Activation('relu')
