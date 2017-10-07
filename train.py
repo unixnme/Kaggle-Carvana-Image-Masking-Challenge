@@ -170,7 +170,7 @@ if __name__ == '__main__':
     learning_rate = 1e-3
     input_mean = 0.
     decay = 0.5
-    offset = 321
+    offset = 331
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -198,7 +198,7 @@ if __name__ == '__main__':
                                  kernel=3,
                                  filter=4,
                                  dilation=1,
-                                 regularizer=None,
+                                 regularizer=l2(1e-4),
                                  activation=activations[idx],
                                  BN=BNs[idx],
                                  pooling='max',
