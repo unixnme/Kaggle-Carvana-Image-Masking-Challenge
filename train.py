@@ -125,15 +125,6 @@ def train_generator(save_to_ram=False):
                 if save_to_ram is True:
                     cache[id] = (img, mask)
 
-                img = randomHueSaturationValue(img,
-                                               hue_shift_limit=(0, 0),
-                                               sat_shift_limit=(-0, 0),
-                                               val_shift_limit=(-0, 0))
-                img, mask = randomShiftScaleRotate(img, mask,
-                                                   shift_limit=(-0.0625, 0.0625),
-                                                   scale_limit=(-0.1, 0.1),
-                                                   rotate_limit=(-5, 5),
-                                                   u=1)
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
@@ -179,7 +170,7 @@ if __name__ == '__main__':
     learning_rate = 1e-3
     input_mean = 0.
     decay = 0.5
-    offset = 301
+    offset = 321
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -222,13 +213,13 @@ if __name__ == '__main__':
                                          save_weights_only=False),
                          ReduceLROnPlateau(monitor='val_loss',
                                            factor=decay,
-                                           patience=3,
+                                           patience=6,
                                            verbose=1,
-                                           epsilon=1e-4,
+                                           epsilon=1e-5,
                                            mode='min',
                                            min_lr=1e-5),
                          EarlyStopping(monitor='val_loss',
-                                           patience=5,
+                                           patience=10,
                                            verbose=1,
                                            mode='min',
                                            min_delta=1e-5)]
