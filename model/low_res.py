@@ -12,9 +12,9 @@ def block(x, name, kernel=3, filter=4, dilation=1, regularizer=None, activation=
 
     for idx in range(n):
         x = Conv2D(filter, kernel, padding='same', dilation_rate=dilation, kernel_regularizer=regularizer, name=name+'_conv'+str(idx+1), kernel_initializer=initializer)(x)
+        x = activation()(x)
         if BN is True:
             x = BatchNormalization(name=name+'_BN'+str(idx+1))(x)
-        x = activation()(x)
     return x
 
 def create_model(shape, num_blocks=3, kernel=3, filter=4, dilation=1, regularizer=None, activation=relu, BN=False, pooling='max', initializer='glorot_uniform'):
