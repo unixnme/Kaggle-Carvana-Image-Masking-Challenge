@@ -1,5 +1,5 @@
 from keras.models import Model
-from keras.layers import Conv2D, concatenate, BatchNormalization, Input, MaxPooling2D, AveragePooling2D, UpSampling2D
+from keras.layers import Conv2D, concatenate, BatchNormalization, Input, MaxPooling2D, AveragePooling2D, UpSampling2D, Add
 from model.u_net import relu, leaky
 
 def block(x, name, kernel=3, filter=4, dilation=1, regularizer=None, activation=relu, BN=False, initializer='glorot_uniform'):
@@ -22,8 +22,10 @@ def create_model(shape, num_blocks=3, kernel=3, filter=4, dilation=1, regularize
     x = img_in
 
     # encoding
+    encoders = []
     for i in range(num_blocks):
         x = block(x, name='down_block'+str(i+1), kernel=kernel, filter=filter*(2**i), dilation=dilation, regularizer=regularizer, activation=activation, BN=BN, initializer=initializer)
+        encoders.append(x)
         if pooling == 'max':
             x = MaxPooling2D(padding='same')(x)
         elif pooling == 'average':
@@ -38,6 +40,7 @@ def create_model(shape, num_blocks=3, kernel=3, filter=4, dilation=1, regularize
     for i in range(num_blocks):
         x = UpSampling2D()(x)
         x = block(x, name='up_block'+str(num_blocks-i), kernel=kernel, filter=filter*(2**(num_blocks-i-1)), dilation=dilation, regularizer=regularizer, activation=activation, BN=BN, initializer=initializer)
+        x = Add()([x, encoders.pop()])
 
     classify = Conv2D(1, 1, name='classify', activation='sigmoid')(x)
     return Model(inputs=img_in, outputs=classify)
