@@ -1,5 +1,6 @@
 from keras.models import Model
 from keras.layers import Conv2D, concatenate, BatchNormalization, Input, MaxPooling2D, AveragePooling2D, UpSampling2D, Add
+from keras.layers.merge import Concatenate
 from model.u_net import relu, leaky
 
 def block(x, name, kernel=3, filter=4, dilation=1, regularizer=None, activation=relu, BN=False, initializer='glorot_uniform'):
@@ -20,7 +21,6 @@ def block(x, name, kernel=3, filter=4, dilation=1, regularizer=None, activation=
 def create_model(shape, num_blocks=3, kernel=3, filter=4, encoding_dilation=1, decoding_dilation=1, regularizer=None, activation=relu, BN=False, pooling='max', initializer='glorot_uniform'):
     img_in = Input(shape=shape)
     x = img_in
-    x = BatchNormalization()(x)
 
     # encoding
     encoders = []
@@ -41,7 +41,15 @@ def create_model(shape, num_blocks=3, kernel=3, filter=4, encoding_dilation=1, d
     for i in range(num_blocks):
         x = UpSampling2D()(x)
         x = block(x, name='up_block'+str(num_blocks-i), kernel=kernel, filter=filter*(2**(num_blocks-i-1)), dilation=decoding_dilation, regularizer=regularizer, activation=activation, BN=BN, initializer=initializer)
-        x = Add()([x, encoders.pop()])
+        x = Concatenate(axis=-1)([x, encoders.pop()])
+        x = Conv2D(filter*(2**(num_blocks-i-1)), 1,
+                   name='up_block'+str(num_blocks-i)+'_concate_conv',
+                   kernel_regularizer=regularizer,
+                   kernel_initializer=initializer,
+                   padding='same')(x)
+        x = activation()(x)
+        if BN is True:
+            x = BatchNormalization(name='up_block'+str(num_blocks-i)+'_concate_BN')(x)
 
     classify = Conv2D(1, 1, name='classify', activation='sigmoid')(x)
     return Model(inputs=img_in, outputs=classify)
