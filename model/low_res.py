@@ -21,6 +21,7 @@ def block(x, name, kernel=3, filter=4, dilation=1, regularizer=None, activation=
 def create_model(shape, num_blocks=3, kernel=3, filter=4, encoding_dilation=1, decoding_dilation=1, regularizer=None, activation=relu, BN=False, pooling='max', initializer='glorot_uniform'):
     img_in = Input(shape=shape)
     x = img_in
+    x = BatchNormalization()(x)
 
     # encoding
     encoders = []
