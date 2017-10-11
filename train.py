@@ -174,7 +174,7 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 441
+    offset = 451
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -199,7 +199,7 @@ if __name__ == '__main__':
 
             model = create_model(shape=(rows, cols, 3),
                                  num_blocks=3,
-                                 kernel=3,
+                                 kernel=7,
                                  filter=4,
                                  encoding_dilation=1,
                                  decoding_dilation=1,
