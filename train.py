@@ -124,11 +124,15 @@ def train_generator(save_to_ram=False):
                     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                 if save_to_ram is True:
                     cache[id] = (img, mask)
-
                 img = randomHueSaturationValue(img,
                                                hue_shift_limit=(-50, 50),
                                                sat_shift_limit=(-5, 5),
                                                val_shift_limit=(-15, 15))
+                img, mask = randomShiftScaleRotate(img, mask,
+                                                   shift_limit=(-0.0625, 0.0625),
+                                                   scale_limit=(-0.1, 0.1),
+                                                   rotate_limit=(-5, 5),
+                                                   u=1)
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
@@ -174,7 +178,7 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 471
+    offset = 481
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
