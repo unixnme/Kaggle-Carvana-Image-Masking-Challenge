@@ -171,11 +171,11 @@ if __name__ == '__main__':
     epochs = 200
     batch_size = 40
     rows, cols = 256, 256
-    learning_rate = 2e-3
+    learning_rate = 2e-3 * 4
     input_mean = 0.
     decay = 0.5
     half_life = 200. / np.log2(200)
-    offset = 501
+    offset = 511
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
