@@ -171,7 +171,7 @@ if __name__ == '__main__':
     epochs = 200
     batch_size = 40
     rows, cols = 256, 256
-    learning_rate = 2e-3
+    learning_rate = 4e-3
     input_mean = 0.
     decay = 0.5
     half_life = 200. / np.log2(200)
