@@ -249,11 +249,13 @@ if __name__ == '__main__':
             plt.legend(['train', 'validation'], loc='upper left')
             fig.savefig(name + '_loss.png')
             # "LearningRate"
+            '''
             fig = plt.figure()
             plt.plot(history.history['lr'])
             plt.title('learning rate')
             plt.ylabel('learning rate')
             plt.xlabel('epoch')
             fig.savefig(name + '_lr.png')
+            '''
 
             del model
