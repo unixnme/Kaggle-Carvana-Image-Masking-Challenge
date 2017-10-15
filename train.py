@@ -169,9 +169,9 @@ def valid_generator(save_to_ram=False):
 if __name__ == '__main__':
 
     epochs = 200
-    batch_size = 40
+    batch_size = 2
     rows, cols = 256, 256
-    learning_rate = 2e-3 * 4
+    learning_rate = 1e-3
     input_mean = 0.
     decay = 0.5
     half_life = 200. / np.log2(200)
@@ -249,11 +249,13 @@ if __name__ == '__main__':
             plt.legend(['train', 'validation'], loc='upper left')
             fig.savefig(name + '_loss.png')
             # "LearningRate"
+            '''
             fig = plt.figure()
             plt.plot(history.history['lr'])
             plt.title('learning rate')
             plt.ylabel('learning rate')
             plt.xlabel('epoch')
             fig.savefig(name + '_lr.png')
+            '''
 
             del model
