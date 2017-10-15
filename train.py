@@ -168,13 +168,14 @@ def valid_generator(save_to_ram=False):
 
 if __name__ == '__main__':
 
-    epochs = 1000
+    epochs = 200
     batch_size = 10
     rows, cols = 256, 256
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 441
+    half_life = 200. / np.log2(200)
+    offset = 491
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -216,18 +217,7 @@ if __name__ == '__main__':
                                          verbose=True,
                                          save_best_only=True,
                                          save_weights_only=False),
-                         ReduceLROnPlateau(monitor='val_loss',
-                                           factor=decay,
-                                           patience=6,
-                                           verbose=1,
-                                           epsilon=1e-5,
-                                           mode='min',
-                                           min_lr=1e-5),
-                         EarlyStopping(monitor='val_loss',
-                                           patience=10,
-                                           verbose=1,
-                                           mode='min',
-                                           min_delta=1e-5)]
+                         LearningRateScheduler(step_decay)]
 
             history = model.fit_generator(generator=train_generator(True),
                                 steps_per_epoch=steps_per_epoch,
