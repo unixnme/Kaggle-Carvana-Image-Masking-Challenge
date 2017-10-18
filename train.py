@@ -118,6 +118,8 @@ def train_generator(save_to_ram=False):
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                     mask = cv2.imread('input/train_masks/{}_mask.png'.format(id))
+                    img = cv2.copyMakeBorder(img, 0, 0, 1, 1, cv2.BORDER_CONSTANT, value=[0,0,0])
+                    mask = cv2.copyMakeBorder(mask, 0, 0, 1, 1, cv2.BORDER_CONSTANT, value=[0,0,0])
                     img = cv2.resize(img, (cols, rows), interpolation=cv2.INTER_NEAREST)
                     mask = cv2.resize(mask, (cols, rows), interpolation=cv2.INTER_NEAREST)
                     # mask color to gray
@@ -151,6 +153,8 @@ def valid_generator(save_to_ram=False):
                 else:
                     img = cv2.imread('input/train_hq/{}.jpg'.format(id))
                     mask = cv2.imread('input/train_masks/{}_mask.png'.format(id))
+                    img = cv2.copyMakeBorder(img, 0, 0, 1, 1, cv2.BORDER_CONSTANT, value=[0,0,0])
+                    mask = cv2.copyMakeBorder(mask, 0, 0, 1, 1, cv2.BORDER_CONSTANT, value=[0,0,0])
                     img = cv2.resize(img, (cols, rows), interpolation=cv2.INTER_NEAREST)
                     mask = cv2.resize(mask, (cols, rows), interpolation=cv2.INTER_NEAREST)
                     # mask color to gray
@@ -170,11 +174,11 @@ if __name__ == '__main__':
 
     epochs = 1000
     batch_size = 10
-    rows, cols = 256, 256
+    rows, cols = 256, 384
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 441
+    offset = 551
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
