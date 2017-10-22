@@ -93,14 +93,14 @@ def randomHorizontalFlip(image, mask, u=0.5):
     return image, mask
 
 def randomCrop(img, mask, crop_size):
-    rows, cols = crop_size
+    crop_rows, crop_cols = crop_size
     x0 = 0
     y0 = 0
-    if cols < img.shape[1]:
-        x0 = np.random.randint(img.shape[1] - cols)
+    if crop_cols < img.shape[1]:
+        x0 = np.random.randint(img.shape[1] - crop_cols)
     if rows < img.shape[0]:
-        y0 = np.random.randint(img.shape[0] - rows)
-    return img[y0:y0+rows, x0:x0+cols, :], mask[y0:y0+rows, x0:x0+cols]
+        y0 = np.random.randint(img.shape[0] - crop_rows)
+    return img[y0:y0+crop_rows, x0:x0+crop_cols, :], mask[y0:y0+crop_rows, x0:x0+crop_cols]
 
 def train_generator(save_to_ram=False):
     indices = np.array(ids_train_split.index)
@@ -131,6 +131,7 @@ def train_generator(save_to_ram=False):
                                                hue_shift_limit=(-50, 50),
                                                sat_shift_limit=(-5, 5),
                                                val_shift_limit=(-15, 15))
+                img, mask = randomCrop(img, mask, crop_size=crop_size)
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
@@ -173,12 +174,13 @@ def valid_generator(save_to_ram=False):
 if __name__ == '__main__':
 
     epochs = 1000
-    batch_size = 4
+    batch_size = 10
     rows, cols = 512, 768
+    crop_size = (256, 384)
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 571
+    offset = 601
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -192,8 +194,8 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    activations = [relu, relu, elu, elu, leaky(0.1), leaky(0.1)]
-    weight_decay = [1e-5, 1e-6, 1e-5, 1e-6, 1e-5, 1e-6]
+    activations = [relu, elu, leaky(0.1)]
+    weight_decay = [1e-6, 1e-6, 1e-6]
 
     for idx in range(len(activations)):
         name = 'exp' + str(idx + offset)
@@ -201,7 +203,7 @@ if __name__ == '__main__':
             sys.stdout = f
             filepath = 'weights/' + name + '_model.h5'
 
-            model = create_model(shape=(rows, cols, 3),
+            model = create_model(shape=(None, None, 3),
                                  num_blocks=3,
                                  kernel=3,
                                  filter=4,
