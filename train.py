@@ -110,6 +110,8 @@ def train_generator(save_to_ram=False):
         for start in range(0, len(ids_train_split), batch_size):
             x_batch = []
             y_batch = []
+            dx = np.random.randint((cols-crop_size[1])/8 + 1)*8
+            dy = np.random.randint((rows-crop_size[0])/8 + 1)*8
             end = min(start + batch_size, len(ids_train_split))
             ids_train_batch = ids_train_split[indices[start:end]]
             for id in ids_train_batch.values:
@@ -131,7 +133,7 @@ def train_generator(save_to_ram=False):
                                                hue_shift_limit=(-50, 50),
                                                sat_shift_limit=(-5, 5),
                                                val_shift_limit=(-15, 15))
-                img, mask = randomCrop(img, mask, crop_size=crop_size)
+                img, mask = randomCrop(img, mask, crop_size=(crop_size[0]+dy, crop_size[1]+dx))
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
                 x_batch.append(img)
@@ -180,7 +182,7 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 601
+    offset = 611
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
