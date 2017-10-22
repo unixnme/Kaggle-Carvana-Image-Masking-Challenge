@@ -13,7 +13,7 @@ from model.u_net import leaky, relu, prelu, elu
 from model.low_res import create_model
 from model.losses import bce_dice_loss, dice_coeff
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pickle
 
@@ -98,7 +98,7 @@ def randomCrop(img, mask, crop_size):
     y0 = 0
     if crop_cols < img.shape[1]:
         x0 = np.random.randint(img.shape[1] - crop_cols)
-    if rows < img.shape[0]:
+    if crop_rows < img.shape[0]:
         y0 = np.random.randint(img.shape[0] - crop_rows)
     return img[y0:y0+crop_rows, x0:x0+crop_cols, :], mask[y0:y0+crop_rows, x0:x0+crop_cols]
 
@@ -170,6 +170,17 @@ def valid_generator(save_to_ram=False):
             y_batch = np.array(y_batch, np.float32) / 255
             yield x_batch, y_batch
 
+def check_generators(generator):
+    img, mask = next(generator)
+    img = (img - input_mean + 0.5) * 255
+    mask *= 255
+    for x,y in zip(img, mask):
+        fig = plt.figure()
+        fig.add_subplot(1,2,1)
+        plt.imshow(x.astype(np.uint8))
+        fig.add_subplot(1,2,2)
+        plt.imshow(np.squeeze(y.astype(np.uint8), axis=-1), cmap='gray')
+        plt.show()
 
 if __name__ == '__main__':
 
@@ -235,6 +246,9 @@ if __name__ == '__main__':
                                            mode='min',
                                            min_delta=1e-5)]
 
+            check_generators(generator=train_generator(True))
+
+            '''
             history = model.fit_generator(generator=train_generator(True),
                                 steps_per_epoch=steps_per_epoch,
                                 epochs=epochs,
@@ -271,5 +285,5 @@ if __name__ == '__main__':
             plt.ylabel('learning rate')
             plt.xlabel('epoch')
             fig.savefig(name + '_lr.png')
-
+            '''
             del model
