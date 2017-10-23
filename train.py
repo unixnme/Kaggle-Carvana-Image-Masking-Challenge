@@ -105,13 +105,14 @@ def randomCrop(img, mask, crop_size):
 def train_generator(save_to_ram=False):
     indices = np.array(ids_train_split.index)
     cache = {}
+    crop_increment = 16
     while True:
         np.random.shuffle(indices)
         for start in range(0, len(ids_train_split), batch_size):
             x_batch = []
             y_batch = []
-            dx = np.random.randint((cols-crop_size[1])/8 + 1)*8
-            dy = np.random.randint((rows-crop_size[0])/8 + 1)*8
+            dx = np.random.randint((cols-crop_size[1])/crop_increment + 1)*crop_increment
+            dy = np.random.randint((rows-crop_size[0])/crop_increment + 1)*crop_increment
             end = min(start + batch_size, len(ids_train_split))
             ids_train_batch = ids_train_split[indices[start:end]]
             for id in ids_train_batch.values:
@@ -182,7 +183,7 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 641
+    offset = 651
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -206,11 +207,11 @@ if __name__ == '__main__':
             filepath = 'weights/' + name + '_model.h5'
 
             model = create_model(shape=(None, None, 3),
-                                 num_blocks=3,
+                                 num_blocks=4,
                                  kernel=3,
                                  filter=4,
-                                 encoding_dilation=2,
-                                 decoding_dilation=2,
+                                 encoding_dilation=1,
+                                 decoding_dilation=1,
                                  regularizer=l2(weight_decay[idx]),
                                  activation=activations[idx],
                                  BN=True,
