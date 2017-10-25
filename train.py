@@ -182,7 +182,7 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 621
+    offset = 681
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -208,7 +208,7 @@ if __name__ == '__main__':
             model = create_model(shape=(None, None, 3),
                                  num_blocks=3,
                                  kernel=3,
-                                 filter=8,
+                                 filter=[8,8,8,8,8,8,8],
                                  encoding_dilation=1,
                                  decoding_dilation=1,
                                  regularizer=l2(weight_decay[idx]),
@@ -216,6 +216,7 @@ if __name__ == '__main__':
                                  BN=True,
                                  pooling='average',
                                  initializer='he_normal')
+            model.summary()
             # model.load_weights(filepath, by_name=True)
             model.compile(optimizer=Nadam(learning_rate, clipnorm=1.), loss=bce_dice_loss, metrics=[dice_coeff])
 
