@@ -118,8 +118,8 @@ def train_generator(save_to_ram=False):
                 if save_to_ram is True and cache.has_key(id):
                     img, mask = cache[id]
                 else:
-                    img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id))
+                    img = cv2.imread('/mnt/ramdisk/train_hq/{}.jpg'.format(id))
+                    mask = cv2.imread('/mnt/ramdisk/train_masks/{}_mask.png'.format(id))
                     img = cv2.copyMakeBorder(img, 0, 0, 1, 1, cv2.BORDER_CONSTANT, value=[0,0,0])
                     mask = cv2.copyMakeBorder(mask, 0, 0, 1, 1, cv2.BORDER_CONSTANT, value=[0,0,0])
                     img = cv2.resize(img, (cols, rows), interpolation=cv2.INTER_NEAREST)
@@ -154,8 +154,8 @@ def valid_generator(save_to_ram=False):
                 if save_to_ram is True and cache.has_key(id):
                     img, mask = cache[id]
                 else:
-                    img = cv2.imread('input/train_hq/{}.jpg'.format(id))
-                    mask = cv2.imread('input/train_masks/{}_mask.png'.format(id))
+                    img = cv2.imread('/mnt/ramdisk/train_hq/{}.jpg'.format(id))
+                    mask = cv2.imread('/mnt/ramdisk/train_masks/{}_mask.png'.format(id))
                     img = cv2.copyMakeBorder(img, 0, 0, 1, 1, cv2.BORDER_CONSTANT, value=[0,0,0])
                     mask = cv2.copyMakeBorder(mask, 0, 0, 1, 1, cv2.BORDER_CONSTANT, value=[0,0,0])
                     img = cv2.resize(img, (cols, rows), interpolation=cv2.INTER_NEAREST)
@@ -238,12 +238,12 @@ if __name__ == '__main__':
                                            mode='min',
                                            min_delta=1e-5)]
 
-            history = model.fit_generator(generator=train_generator(True),
+            history = model.fit_generator(generator=train_generator(False),
                                 steps_per_epoch=steps_per_epoch,
                                 epochs=epochs,
                                 verbose=1,
                                 callbacks=callbacks,
-                                validation_data=valid_generator(True),
+                                validation_data=valid_generator(False),
                                 validation_steps=validation_steps)
             with open(name + '_history.p', 'wb') as f:
                 pickle.dump(history.history, f)
