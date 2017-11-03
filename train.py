@@ -176,13 +176,13 @@ def valid_generator(save_to_ram=False):
 if __name__ == '__main__':
 
     epochs = 1000
-    batch_size = 4
-    rows, cols = 512, 768
-    crop_size = (512, 768)
+    batch_size = 2
+    rows, cols = 1024, 1536
+    crop_size = (1024, 1536)
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 791
+    offset = 811
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
