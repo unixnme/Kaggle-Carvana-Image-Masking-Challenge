@@ -182,7 +182,9 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 801
+    offset = 861
+    num_conv = 1
+    num_blocks = 6
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -205,10 +207,11 @@ if __name__ == '__main__':
             sys.stdout = f
             filepath = 'weights/' + name + '_model.h5'
 
-            model = create_model(shape=(None, None, 3),
-                                 num_blocks=6,
+            model = create_model(shape=(rows, cols, 3),
+                                 num_blocks=num_blocks,
                                  kernel=3,
-                                 filter=[16]*13,
+                                 num_conv=num_conv,
+                                 filter=[16]*(num_blocks*2 + 1),
                                  encoding_dilation=1,
                                  decoding_dilation=1,
                                  regularizer=l2(weight_decay[idx]),

@@ -3,22 +3,15 @@ from keras.layers import Conv2D, concatenate, BatchNormalization, Input, MaxPool
 from keras.layers.merge import Concatenate
 from model.u_net import relu, leaky
 
-def block(x, name, kernel=3, filter=4, dilation=1, regularizer=None, activation=relu, BN=False, initializer='glorot_uniform'):
-    if kernel == 3:
-        n = 3
-    elif kernel == 7:
-        n = 1
-    else:
-        raise Exception('kernel must be 3 or 7')
-
-    for idx in range(n):
+def block(x, name, kernel=3, num_conv = 3, filter=4, dilation=1, regularizer=None, activation=relu, BN=False, initializer='glorot_uniform'):
+    for idx in range(num_conv):
         x = Conv2D(filter, kernel, padding='same', dilation_rate=dilation, kernel_regularizer=regularizer, name=name+'_conv'+str(idx+1), kernel_initializer=initializer)(x)
         x = activation()(x)
         if BN is True:
             x = BatchNormalization(name=name+'_BN'+str(idx+1))(x)
     return x
 
-def create_model(shape, num_blocks=3, kernel=3, filter=[4,8,16,8,4], encoding_dilation=1, decoding_dilation=1, regularizer=None, activation=relu, BN=False, pooling='max', initializer='glorot_uniform'):
+def create_model(shape, num_blocks=3, num_conv = 3, kernel=3, filter=[4,8,16,8,4], encoding_dilation=1, decoding_dilation=1, regularizer=None, activation=relu, BN=False, pooling='max', initializer='glorot_uniform'):
     img_in = Input(shape=shape)
     x = img_in
     x = BatchNormalization()(x)
@@ -27,7 +20,7 @@ def create_model(shape, num_blocks=3, kernel=3, filter=[4,8,16,8,4], encoding_di
     # encoding
     encoders = []
     for i in range(num_blocks):
-        x = block(x, name='down_block'+str(i+1), kernel=kernel, filter=filter[i], dilation=encoding_dilation, regularizer=regularizer, activation=activation, BN=BN, initializer=initializer)
+        x = block(x, name='down_block'+str(i+1), kernel=kernel, num_conv=num_conv, filter=filter[i], dilation=encoding_dilation, regularizer=regularizer, activation=activation, BN=BN, initializer=initializer)
         encoders.append(x)
         if pooling == 'max':
             x = MaxPooling2D(padding='same')(x)
@@ -38,13 +31,13 @@ def create_model(shape, num_blocks=3, kernel=3, filter=[4,8,16,8,4], encoding_di
         index += 1
 
     # processing
-    x = block(x, name='center_block', kernel=kernel, filter=filter[index], dilation=encoding_dilation, regularizer=regularizer, activation=activation, BN=BN, initializer=initializer)
+    x = block(x, name='center_block', kernel=kernel, num_conv=num_conv, filter=filter[index], dilation=encoding_dilation, regularizer=regularizer, activation=activation, BN=BN, initializer=initializer)
     index += 1
 
     # decoding
     for i in range(num_blocks):
         x = UpSampling2D()(x)
-        x = block(x, name='up_block'+str(num_blocks-i), kernel=kernel, filter=filter[index], dilation=decoding_dilation, regularizer=regularizer, activation=activation, BN=BN, initializer=initializer)
+        x = block(x, name='up_block'+str(num_blocks-i), kernel=kernel, num_conv=num_conv,  filter=filter[index], dilation=decoding_dilation, regularizer=regularizer, activation=activation, BN=BN, initializer=initializer)
         x = Concatenate(axis=-1)([x, encoders.pop()])
         x = Conv2D(filter[index], 1,
                    name='up_block'+str(num_blocks-i)+'_concate_conv',
