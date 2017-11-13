@@ -177,14 +177,14 @@ if __name__ == '__main__':
 
     epochs = 1000
     batch_size = 4
-    rows, cols = 512, 768
-    crop_size = (512, 768)
+    rows, cols = 1024, 1536
+    crop_size = (1024, 1536)
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 861
+    offset = 891
     num_conv = 1
-    num_blocks = 6
+    num_blocks = 9
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -198,8 +198,8 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    activations = [relu, elu, leaky(0.1)]
-    weight_decay = [1e-6, 1e-6, 1e-6]
+    activations = [relu, elu]
+    weight_decay = [1e-6, 1e-6]
 
     for idx in range(len(activations)):
         name = 'exp' + str(idx + offset)
