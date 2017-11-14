@@ -182,7 +182,7 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 891
+    offset = 901
     num_conv = 1
     num_blocks = 9
 
@@ -211,7 +211,7 @@ if __name__ == '__main__':
                                  num_blocks=num_blocks,
                                  kernel=3,
                                  num_conv=num_conv,
-                                 filter=[16]*(num_blocks*2 + 1),
+                                 filter=[4,8,16,32] + [64]*11 + [32,16,8,4],
                                  encoding_dilation=1,
                                  decoding_dilation=1,
                                  regularizer=l2(weight_decay[idx]),
