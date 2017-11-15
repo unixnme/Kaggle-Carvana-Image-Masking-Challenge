@@ -179,7 +179,7 @@ if __name__ == '__main__':
     batch_size = 4
     rows, cols = 1024, 1536
     crop_size = (1024, 1536)
-    learning_rate = 2e-3
+    learning_rate = [0.000500000023749, 2e-3]
     input_mean = 0.
     decay = 0.5
     offset = 901
@@ -221,7 +221,7 @@ if __name__ == '__main__':
                                  initializer='he_normal')
             model.summary()
             # model.load_weights(filepath, by_name=True)
-            model.compile(optimizer=Nadam(learning_rate, clipnorm=1.), loss=bce_dice_loss, metrics=[dice_coeff])
+            model.compile(optimizer=Nadam(learning_rate[idx], clipnorm=1.), loss=bce_dice_loss, metrics=[dice_coeff])
 
             callbacks = [ModelCheckpoint(monitor='val_loss',
                                          filepath=filepath,
@@ -241,6 +241,8 @@ if __name__ == '__main__':
                                            mode='min',
                                            min_delta=1e-5)]
 
+            if os.path.isfile(filepath):
+                model.load_weights(filepath)
             history = model.fit_generator(generator=train_generator(False),
                                 steps_per_epoch=steps_per_epoch,
                                 epochs=epochs,
