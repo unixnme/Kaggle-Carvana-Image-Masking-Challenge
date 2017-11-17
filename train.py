@@ -182,7 +182,7 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 901
+    offset = 911
     num_conv = 1
     num_blocks = 9
 

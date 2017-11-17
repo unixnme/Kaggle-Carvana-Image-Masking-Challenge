@@ -5,7 +5,7 @@ from model.u_net import relu, leaky
 
 def block(x, name, kernel=3, num_conv = 3, filter=4, dilation=1, regularizer=None, activation=relu, BN=False, initializer='glorot_uniform'):
     for idx in range(num_conv):
-        x = Conv2D(filter, kernel, padding='same', dilation_rate=dilation, kernel_regularizer=regularizer, name=name+'_conv'+str(idx+1), kernel_initializer=initializer)(x)
+        x = Conv2D(filter, kernel, padding='same', dilation_rate=dilation, kernel_regularizer=regularizer, bias_regularizer=regularizer, name=name+'_conv'+str(idx+1), kernel_initializer=initializer)(x)
         x = activation()(x)
         if BN is True:
             x = BatchNormalization(name=name+'_BN'+str(idx+1))(x)
@@ -41,7 +41,7 @@ def create_model(shape, num_blocks=3, num_conv = 3, kernel=3, filter=[4,8,16,8,4
         x = Concatenate(axis=-1)([x, encoders.pop()])
         x = Conv2D(filter[index], 1,
                    name='up_block'+str(num_blocks-i)+'_concate_conv',
-                   kernel_regularizer=regularizer,
+                   kernel_regularizer=regularizer, bias_regularizer=regularizer,
                    kernel_initializer=initializer,
                    padding='same')(x)
         x = activation()(x)
