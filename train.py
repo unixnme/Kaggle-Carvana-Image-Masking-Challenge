@@ -182,9 +182,10 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 911
+    offset = 921
     num_conv = 1
     num_blocks = 9
+    drop_rate=0.1
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -218,7 +219,8 @@ if __name__ == '__main__':
                                  activation=activations[idx],
                                  BN=True,
                                  pooling='average',
-                                 initializer='he_normal')
+                                 initializer='he_normal',
+                                 drop_rate=drop_rate)
             model.summary()
             # model.load_weights(filepath, by_name=True)
             model.compile(optimizer=Nadam(learning_rate, clipnorm=1.), loss=bce_dice_loss, metrics=[dice_coeff])

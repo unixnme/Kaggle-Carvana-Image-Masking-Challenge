@@ -1,5 +1,5 @@
 from keras.models import Model
-from keras.layers import Conv2D, concatenate, BatchNormalization, Input, MaxPooling2D, AveragePooling2D, UpSampling2D, Add
+from keras.layers import Conv2D, concatenate, BatchNormalization, Input, MaxPooling2D, AveragePooling2D, UpSampling2D, Add, Dropout
 from keras.layers.merge import Concatenate
 from model.u_net import relu, leaky
 
@@ -11,7 +11,7 @@ def block(x, name, kernel=3, num_conv = 3, filter=4, dilation=1, regularizer=Non
             x = BatchNormalization(name=name+'_BN'+str(idx+1))(x)
     return x
 
-def create_model(shape, num_blocks=3, num_conv = 3, kernel=3, filter=[4,8,16,8,4], encoding_dilation=1, decoding_dilation=1, regularizer=None, activation=relu, BN=False, pooling='max', initializer='glorot_uniform'):
+def create_model(shape, num_blocks=3, num_conv = 3, kernel=3, filter=[4,8,16,8,4], encoding_dilation=1, decoding_dilation=1, regularizer=None, activation=relu, BN=False, pooling='max', initializer='glorot_uniform', drop_rate=0.1):
     img_in = Input(shape=shape)
     x = img_in
     x = BatchNormalization()(x)
@@ -28,6 +28,7 @@ def create_model(shape, num_blocks=3, num_conv = 3, kernel=3, filter=[4,8,16,8,4
             x = AveragePooling2D(padding='same')(x)
         else:
             raise Exception('pooling must be "max" or "average"')
+        x = Dropout(drop_rate)(x)
         index += 1
 
     # processing
@@ -36,6 +37,7 @@ def create_model(shape, num_blocks=3, num_conv = 3, kernel=3, filter=[4,8,16,8,4
 
     # decoding
     for i in range(num_blocks):
+        x = Dropout(drop_rate)(x)
         x = UpSampling2D()(x)
         x = block(x, name='up_block'+str(num_blocks-i), kernel=kernel, num_conv=num_conv,  filter=filter[index], dilation=decoding_dilation, regularizer=regularizer, activation=activation, BN=BN, initializer=initializer)
         x = Concatenate(axis=-1)([x, encoders.pop()])
