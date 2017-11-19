@@ -182,10 +182,10 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 921
-    num_conv = 1
-    num_blocks = 9
-    drop_rate=0.1
+    offset = 931
+    num_conv = 2
+    num_blocks = 8
+    drop_rate=0.0
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -212,7 +212,7 @@ if __name__ == '__main__':
                                  num_blocks=num_blocks,
                                  kernel=3,
                                  num_conv=num_conv,
-                                 filter=[4,8,16,32] + [64]*11 + [32,16,8,4],
+                                 filter=[4,8] + [16]*13 + [8,4],
                                  encoding_dilation=1,
                                  decoding_dilation=1,
                                  regularizer=l2(weight_decay[idx]),
