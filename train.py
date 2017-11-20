@@ -176,13 +176,13 @@ def valid_generator(save_to_ram=False):
 if __name__ == '__main__':
 
     epochs = 1000
-    batch_size = 4
+    batch_size = 2
     rows, cols = 1024, 1536
     crop_size = (1024, 1536)
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 931
+    offset = 961
     num_conv = 2
     num_blocks = 8
     drop_rate=0.0
@@ -199,8 +199,8 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    activations = [relu, elu]
-    weight_decay = [1e-6, 1e-6]
+    activations = [relu]
+    weight_decay = [1e-6]
 
     for idx in range(len(activations)):
         name = 'exp' + str(idx + offset)
@@ -212,7 +212,7 @@ if __name__ == '__main__':
                                  num_blocks=num_blocks,
                                  kernel=3,
                                  num_conv=num_conv,
-                                 filter=[4,8] + [16]*13 + [8,4],
+                                 filter=[16,16,16,32,32,32] + [64]*5 + [32,32,32,16,16,16],
                                  encoding_dilation=1,
                                  decoding_dilation=1,
                                  regularizer=l2(weight_decay[idx]),
