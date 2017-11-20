@@ -133,6 +133,11 @@ def train_generator(save_to_ram=False):
                                                hue_shift_limit=(-50, 50),
                                                sat_shift_limit=(-5, 5),
                                                val_shift_limit=(-15, 15))
+                img, mask = randomShiftScaleRotate(img, mask,
+                                                   shift_limit=(-0.0625, 0.0625),
+                                                   scale_limit=(-0.1, 0.1),
+                                                   rotate_limit=(-5, 5),
+                                                   u=1)
                 img, mask = randomCrop(img, mask, crop_size=(crop_size[0]+dy, crop_size[1]+dx))
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
@@ -182,7 +187,7 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 941
+    offset = 951
     num_conv = 3
     num_blocks = 5
 
@@ -198,8 +203,8 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    activations = [relu, elu, relu, elu]
-    weight_decay = [1e-5, 1e-5, 1e-4, 1e-4]
+    activations = [relu, elu]
+    weight_decay = [1e-6, 1e-6]
 
     for idx in range(len(activations)):
         name = 'exp' + str(idx + offset)
