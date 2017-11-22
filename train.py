@@ -198,10 +198,10 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    activations = [relu, elu, relu, elu]
-    weight_decay = [1e-5, 1e-5, 1e-4, 1e-4]
+    activations = [relu, relu]
+    weight_decay = [1e-5, 1e-4]
 
-    for idx in range(len(activations)):
+    for idx in range(1, len(activations)):
         name = 'exp' + str(idx + offset)
         with open('nohup.out.' + name, 'w') as f:
             sys.stdout = f
