@@ -187,9 +187,9 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 951
-    num_conv = 3
-    num_blocks = 5
+    offset = 971
+    num_conv = 2
+    num_blocks = 6
 
     df_train = pd.read_csv('input/train_masks.csv')
     ids_train = df_train['img'].map(lambda s: s.split('.')[0])
@@ -203,8 +203,8 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    activations = [relu, elu]
-    weight_decay = [1e-6, 1e-6]
+    activations = [relu]
+    weight_decay = [1e-6]
 
     for idx in range(len(activations)):
         name = 'exp' + str(idx + offset)
