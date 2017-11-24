@@ -133,6 +133,11 @@ def train_generator(save_to_ram=False):
                                                hue_shift_limit=(-50, 50),
                                                sat_shift_limit=(-5, 5),
                                                val_shift_limit=(-15, 15))
+                img, mask = randomShiftScaleRotate(img, mask,
+                                                   shift_limit=(-0.0625, 0.0625),
+                                                   scale_limit=(-0.1, 0.1),
+                                                   rotate_limit=(-5, 5),
+                                                   u=1)
                 img, mask = randomCrop(img, mask, crop_size=(crop_size[0]+dy, crop_size[1]+dx))
                 img, mask = randomHorizontalFlip(img, mask)
                 mask = np.expand_dims(mask, axis=2)
@@ -182,7 +187,7 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 961
+    offset = 981
     num_conv = 2
     num_blocks = 8
     drop_rate=0.0
