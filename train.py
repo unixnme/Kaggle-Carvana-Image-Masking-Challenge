@@ -182,7 +182,7 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 941
+    offset = 943
     num_conv = 3
     num_blocks = 5
 
@@ -198,10 +198,10 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    activations = [relu, relu]
-    weight_decay = [1e-5, 1e-4]
+    activations = [relu]
+    weight_decay = [0]
 
-    for idx in range(1, len(activations)):
+    for idx in range(len(activations)):
         name = 'exp' + str(idx + offset)
         with open('nohup.out.' + name, 'w') as f:
             sys.stdout = f
