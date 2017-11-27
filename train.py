@@ -182,7 +182,7 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 961
+    offset = 1011
     num_conv = 2
     num_blocks = 8
     drop_rate=0.0
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
     activations = [relu]
-    weight_decay = [1e-6]
+    weight_decay = [0e-6]
 
     for idx in range(len(activations)):
         name = 'exp' + str(idx + offset)
