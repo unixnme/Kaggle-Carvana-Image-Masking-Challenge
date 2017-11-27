@@ -182,7 +182,7 @@ if __name__ == '__main__':
     learning_rate = 2e-3
     input_mean = 0.
     decay = 0.5
-    offset = 943
+    offset = 1001
     num_conv = 3
     num_blocks = 5
 
@@ -198,8 +198,9 @@ if __name__ == '__main__':
     print('Training on {} samples'.format(len(ids_train_split)))
     print('Validating on {} samples'.format(len(ids_valid_split)))
 
-    activations = [relu]
-    weight_decay = [0]
+    activations = [relu]*2
+    weight_decay = [1e-6]*2
+    use_bias = [True, False]
 
     for idx in range(len(activations)):
         name = 'exp' + str(idx + offset)
@@ -217,6 +218,7 @@ if __name__ == '__main__':
                                  regularizer=l2(weight_decay[idx]),
                                  activation=activations[idx],
                                  BN=True,
+                                 use_bias=use_bias[idx],
                                  pooling='average',
                                  initializer='he_normal')
             model.summary()
